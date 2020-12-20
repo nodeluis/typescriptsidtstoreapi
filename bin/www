@@ -3,12 +3,11 @@
 /**
  * Module dependencies.
  */
-"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const tslib_1 = require("tslib");
-const _server_1 = tslib_1.__importDefault(require("../app"));
+var tslib_1 = require("tslib");
+var _server_1 = tslib_1.__importDefault(require("../app"));
 var debug = require('debug')('dokerizenodemongo:server');
-const http_1 = tslib_1.__importDefault(require("http"));
+var http_1 = tslib_1.__importDefault(require("http"));
 
 /**
  * Get port from environment and store in Express.
@@ -21,10 +20,10 @@ _server_1.default.set('port', port);
  * Create HTTP server.
  */
 
-const socket_io_1 = tslib_1.__importDefault(require("socket.io"));
-const server = http_1.default.createServer(_server_1.default);
-const io = socket_io_1.default.listen(server);
-const ChatService_1 = tslib_1.__importDefault(require("../services/ChatService"));
+var socket_io_1 = tslib_1.__importDefault(require("socket.io"));
+var server = http_1.default.createServer(_server_1.default);
+var io = socket_io_1.default.listen(server);
+var ChatService_1 = tslib_1.__importDefault(require("../services/ChatService"));
 ChatService_1.default(io);
 /**
  * Listen on provided port, on all network interfaces.
