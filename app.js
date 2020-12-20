@@ -6,6 +6,7 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var cors = require('cors');
 
 const MainSevice_1 = tslib_1.__importDefault(require("./services/MainSevice"));
 const adminservices_1 = tslib_1.__importDefault(require("./services/adminservices"));
@@ -27,6 +28,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(cors({origin: '*'}));
 
 app.use('/', MainSevice_1.default);
 app.use('/admin', adminservices_1.default);
