@@ -1,0 +1,29 @@
+{
+  "name": "dokerizenodemongo",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "dependencies": {
+    "@google-cloud/vision": "^2.1.2",
+    "cookie-parser": "~1.4.3",
+    "debug": "~2.6.9",
+    "express": "~4.16.0",
+    "firebase-admin": "^9.4.2",
+    "http-errors": "~1.6.2",
+    "http-status-codes": "^2.1.4",
+    "is-empty": "^1.2.0",
+    "jade": "~1.11.0",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.11.8",
+    "morgan": "~1.9.0",
+    "nodemailer": "^6.4.17",
+    "sha1": "^1.1.1",
+    "sharp": "^0.26.3",
+    "socket.io": "^3.0.4",
+    "tesseract.js": "^2.1.4",
+    "tslib": "^2.0.3",
+    "winston": "^3.3.3"
+  }
+}
