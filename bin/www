@@ -22,8 +22,8 @@ app.set('port', port);
  * Create HTTP server.
  */
 
+const server = http.createServer(app);
 const socket_io_1 = tslib_1.__importDefault(require("socket.io"));
-const server = http_1.default.createServer(_server_1.default);
 const io = socket_io_1.default.listen(server);
 const ChatService_1 = tslib_1.__importDefault(require("../services/ChatService"));
 ChatService_1.default(io);
