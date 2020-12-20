@@ -17,7 +17,7 @@ const http_1 = tslib_1.__importDefault(require("http"));
  */
 
 var port = normalizePort(process.env.PORT || '3000');
-app.set('port', port);
+_server_1.set('port', port);
 
 /**
  * Create HTTP server.
