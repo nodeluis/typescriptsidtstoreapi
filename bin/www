@@ -10,11 +10,6 @@ var app = require('../app');
 var debug = require('debug')('dokerizenodemongo:server');
 var http = require('http');
 
-const socket_io_1 = tslib_1.__importDefault(require("socket.io"));
-const server = http_1.default.createServer(_server_1.default);
-const io = socket_io_1.default.listen(server);
-const ChatService_1 = tslib_1.__importDefault(require("../services/ChatService"));
-ChatService_1.default(io);
 
 /**
  * Get port from environment and store in Express.
@@ -27,7 +22,11 @@ app.set('port', port);
  * Create HTTP server.
  */
 
-var server = http.createServer(app);
+const socket_io_1 = tslib_1.__importDefault(require("socket.io"));
+const server = http_1.default.createServer(_server_1.default);
+const io = socket_io_1.default.listen(server);
+const ChatService_1 = tslib_1.__importDefault(require("../services/ChatService"));
+ChatService_1.default(io);
 
 /**
  * Listen on provided port, on all network interfaces.
