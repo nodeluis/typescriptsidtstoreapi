@@ -24,9 +24,9 @@ app.set('port', port);
 
 const server = http.createServer(app);
 const socket_io_1 = tslib_1.__importDefault(require("socket.io"));
-const io = socket_io_1.default.listen(server);
+const io = socket_io_1.listen(server);
 const ChatService_1 = tslib_1.__importDefault(require("../services/ChatService"));
-ChatService_1.default(io);
+ChatService_1(io);
 
 /**
  * Listen on provided port, on all network interfaces.
