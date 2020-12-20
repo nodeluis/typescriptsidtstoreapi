@@ -1,94 +1,16 @@
-#!/usr/bin/env node
-
-/**
- * Module dependencies.
- */
+"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var tslib_1 = require("tslib");
-var _server_1 = tslib_1.__importDefault(require("../app"));
-var debug = require('debug')('dokerizenodemongo:server');
-var http_1 = tslib_1.__importDefault(require("http"));
-
-/**
- * Get port from environment and store in Express.
- */
-
-var port = normalizePort(process.env.PORT || '3000');
-_server_1.default.set('port', port);
-
-/**
- * Create HTTP server.
- */
-
-var socket_io_1 = tslib_1.__importDefault(require("socket.io"));
-var server = http_1.default.createServer(_server_1.default);
-var io = socket_io_1.default.listen(server);
-var ChatService_1 = tslib_1.__importDefault(require("../services/ChatService"));
+const tslib_1 = require("tslib");
+require("./LoadEnv");
+const _server_1 = tslib_1.__importDefault(require("../app"));
+//const Logger_1 = tslib_1.__importDefault(require("@shared/Logger"));
+const http_1 = tslib_1.__importDefault(require("http"));
+const socket_io_1 = tslib_1.__importDefault(require("socket.io"));
+const server = http_1.default.createServer(_server_1.default);
+const io = socket_io_1.default.listen(server);
+const ChatService_1 = tslib_1.__importDefault(require("../services/ChatService"));
 ChatService_1.default(io);
-/**
- * Listen on provided port, on all network interfaces.
- */
-
-server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
-
-/**
- * Normalize a port into a number, string, or false.
- */
-
-function normalizePort(val) {
-  var port = parseInt(val, 10);
-
-  if (isNaN(port)) {
-    // named pipe
-    return val;
-  }
-
-  if (port >= 0) {
-    // port number
-    return port;
-  }
-
-  return false;
-}
-
-/**
- * Event listener for HTTP server "error" event.
- */
-
-function onError(error) {
-  if (error.syscall !== 'listen') {
-    throw error;
-  }
-
-  var bind = typeof port === 'string'
-    ? 'Pipe ' + port
-    : 'Port ' + port;
-
-  // handle specific listen errors with friendly messages
-  switch (error.code) {
-    case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
-      process.exit(1);
-      break;
-    case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
-      process.exit(1);
-      break;
-    default:
-      throw error;
-  }
-}
-
-/**
- * Event listener for HTTP server "listening" event.
- */
-
-function onListening() {
-  var addr = server.address();
-  var bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port;
-  debug('Listening on ' + bind);
-}
+const port = Number(process.env.PORT || 3000);
+server.listen(port, () => {
+    Logger_1.default.info('Express server started on port: ' + port);
+});
