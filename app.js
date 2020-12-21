@@ -28,7 +28,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(cors({origin: '*'}));
+app.use(cors({origin: 'https://mercadoxpress.herokuapp.com'}));
 
 app.use('/', MainSevice_1.default);
 app.use('/admin', adminservices_1.default);
