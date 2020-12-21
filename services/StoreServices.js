@@ -47,7 +47,7 @@ router.post("/createstore", (req, res) => tslib_1.__awaiter(void 0, void 0, void
         res.status(http_status_codes_1.OK).json({ errorMessage: "El campo Body  está vacio" });
         return;
     }
-    body["rating"] = Number(body["rating"]);
+    body["rating"] = parseInt(body["rating"]);
     body["notify"] = {
         count: 0,
         buys: [],
