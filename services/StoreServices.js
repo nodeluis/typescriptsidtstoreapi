@@ -21,6 +21,8 @@ const router = express_1.Router();
 router.post("/createstore", (req, res) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     var body = req.body;
     var id = req.body.idcustomer;
+    console.log(req.files);
+    
     var storeverification = yield StoreSchema_1.default.findOne({ idcustomer: id }).select('idcustomer');
     if (!empty(storeverification)) {
         res.status(200).json({ serverMessage: "Ud ya tiene una tienda creada", result: storeverification });
