@@ -48,6 +48,11 @@ router.post("/createstore", (req, res) => tslib_1.__awaiter(void 0, void 0, void
         return;
     }
     body["rating"] = Number(body["rating"]);
+    body["notify"] = {
+        count: 0,
+        buys: [],
+        chats: []
+    };
     var store = new StoreSchema_1.default(body);
     if (path != '') {
         store.banner += store._id;
@@ -587,6 +592,7 @@ router.post('/chats', (req, res) => {
     let storeid = req.body.storeid;
     let chatid = req.body.chatid;
     let userid = req.body.userid;
+    console.log(req.body);
     StoreSchema_1.default.findOne({ _id: storeid }).select('products').exec((err, doc) => {
         let indexprod = doc.products.findIndex((dat) => { return dat._id == productid; });
         let indexchat = doc.products[indexprod].chat.findIndex((dat) => { return dat._id == chatid; });
@@ -604,12 +610,17 @@ router.post('/chats', (req, res) => {
         }
     });
 });
-router.get('/getCustomerStore/:id', (req, res) => {
-    let id = req.params.id;
-    StoreSchema_1.default.findOne({ idcustomer: id }).select('verify').exec((err, doc) => {
-        console.log(doc);
+router.post('/getCustomerStore', (req, res) => {
+    let id = req.body.storeid;
+    let tokenfirebase = req.body.tokenfirebase;
+    StoreSchema_1.default.findOne({ _id: id }).select('verify tokenFirebase').exec((err, doc) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         if (!empty(doc)) {
             if (doc.verify) {
+                let indextoken = doc.tokenFirebase.findIndex((dat) => { return dat == tokenfirebase; });
+                if (indextoken == -1) {
+                    doc.tokenFirebase.push(tokenfirebase);
+                    yield StoreSchema_1.default.findByIdAndUpdate(doc._id, doc);
+                }
                 res.status(200).json({
                     message: 'La tienda esta verificada',
                     verify: true,
@@ -634,11 +645,11 @@ router.get('/getCustomerStore/:id', (req, res) => {
                 storeid: ''
             });
         }
-    });
+    }));
 });
 router.post('/verifyStore', (req, res) => {
     let id = req.body.userid;
-    StoreSchema_1.default.findOne({ idcustomer: id }).select('verify storename nit city direction rubro hour phone verificationstore').exec((err, doc) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+    StoreSchema_1.default.findOne({ idcustomer: id }).select('verify storename nit city direction rubro hour phone verificationstore tokenFirebase').exec((err, doc) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         if (!empty(doc)) {
             doc.verify = true;
             doc.storename = req.body.name;
@@ -648,6 +659,7 @@ router.post('/verifyStore', (req, res) => {
             doc.rubro = req.body.rubro;
             doc.hour = req.body.hour;
             doc.phone = req.body.phone;
+            doc.tokenFirebase.push(req.body.tokenfirebase);
             let files = req.files;
             let file = files.credential;
             let date = new Date();

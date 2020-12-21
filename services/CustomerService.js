@@ -10,7 +10,6 @@ const jsonwebtoken_1 = tslib_1.__importDefault(require("jsonwebtoken"));
 const Customer_1 = require("../entities/Customer");
 const StoreSchema_1 = tslib_1.__importDefault(require("../database/StoreSchema"));
 const nodemailer_1 = tslib_1.__importDefault(require("nodemailer"));
-const Logger_1 = tslib_1.__importDefault(require("../shared/Logger"));
 const empty = require('is-empty');
 const router = express_1.Router();
 router.post("/join/singup", (req, res) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
@@ -61,6 +60,26 @@ router.post("/token/get", (req, res, next) => tslib_1.__awaiter(void 0, void 0, 
     }
     res.status(200).json({ errorMessage: "Credenciales erroneas" });
 }));
+router.post("/tokenstore/get", (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+    var params = req.body;
+    if (params.email == null) {
+        res.status(300).json({ errorMessage: "Es necesario el Email" });
+        return;
+    }
+    if (params.password == null) {
+        res.status(300).json({ errorMessage: "Es necesario el password" });
+        return;
+    }
+    var signparams = { email: params.email, password: sha1_1.default(params.password) };
+    let userLoginCorrect = yield CustomerSchema_1.default.findOne(signparams);
+    if (!empty(userLoginCorrect)) {
+        const privatekey = fs_1.default.readFileSync(__dirname + "/../keyrsa/jwtRS256.key", "utf8");
+        const token = jsonwebtoken_1.default.sign({ exp: Math.floor(Date.now() / 1000) + (60 * 60), email: params.email }, privatekey, { algorithm: "RS256" });
+        res.status(200).json({ serverMessage: "Credenciales correctas", userdata: userLoginCorrect, token: token });
+        return;
+    }
+    res.status(200).json({ errorMessage: "Credenciales erroneas" });
+}));
 router.put("/logout/tokenfirebase", (req, res) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     let userid = req.body.userid;
     let tokenfirebase = req.body.tokenfirebase;
@@ -73,11 +92,31 @@ router.put("/logout/tokenfirebase", (req, res) => tslib_1.__awaiter(void 0, void
             else {
                 res.status(http_status_codes_1.OK).json({ message: 'Su sesión acabó' });
                 doc.tokenFirebase.splice(indextoken, 1);
-                CustomerSchema_1.default.findByIdAndUpdate(doc._id, doc, () => { Logger_1.default.info('token borrado'); });
+                CustomerSchema_1.default.findByIdAndUpdate(doc._id, doc, () => { console.log('token borrado'); });
             }
         }
         else {
             res.status(http_status_codes_1.BAD_REQUEST).json({ message: 'Error en la consulta', err });
+        }
+    });
+}));
+router.put("/logoutstore/tokenfirebase", (req, res) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+    let storeid = req.body.storeid;
+    let tokenfirebase = req.body.tokenfirebase;
+    StoreSchema_1.default.findOne({ _id: storeid }).select('tokenFirebase').exec((err, doc) => {
+        if (!empty(doc)) {
+            let indextoken = doc.tokenFirebase.findIndex((token) => { return token == tokenfirebase; });
+            if (indextoken == -1) {
+                res.status(http_status_codes_1.OK).json({ message: 'Su sesión acabó, Para recibir notificaciones de forma correcta vuelva a iniciar sesión' });
+            }
+            else {
+                res.status(http_status_codes_1.OK).json({ message: 'Su sesión acabó' });
+                doc.tokenFirebase.splice(indextoken, 1);
+                StoreSchema_1.default.findByIdAndUpdate(doc._id, doc, () => { console.log('token borrado'); });
+            }
+        }
+        else {
+            res.status(http_status_codes_1.OK).json({ message: 'Su sesión acabó', err });
         }
     });
 }));

@@ -4,13 +4,24 @@ const tslib_1 = require("tslib");
 const express_1 = require("express");
 const CustomerSchema_1 = tslib_1.__importDefault(require("../database/CustomerSchema"));
 const http_status_codes_1 = require("http-status-codes");
+const StoreSchema_1 = tslib_1.__importDefault(require("../database/StoreSchema"));
 const empty = require('is-empty');
 const router = express_1.Router();
 const FirebaseAdmin_1 = tslib_1.__importDefault(require("./FirebaseAdmin"));
 router.get('/all/:id', (req, res) => {
-    CustomerSchema_1.default.findOne({ _id: req.params.id }).select('notify tokenFirebase').exec((err, doc) => {
-        if (err) {
+    CustomerSchema_1.default.findOne({ _id: req.params.id }).select('notify').exec((err, doc) => {
+        if (empty(doc)) {
             res.status(http_status_codes_1.BAD_REQUEST).json({ errorMessage: 'error en la petición de notificaciones' });
+            return;
+        }
+        res.status(200).json(doc);
+    });
+});
+router.get('/allstore/:id', (req, res) => {
+    StoreSchema_1.default.findOne({ _id: req.params.id }).select('notify').exec((err, doc) => {
+        if (empty(doc)) {
+            res.status(http_status_codes_1.BAD_REQUEST).json({ errorMessage: 'error en la petición de notificaciones' });
+            return;
         }
         res.status(200).json(doc);
     });
@@ -74,6 +85,17 @@ router.get('/countnotifications/:id', (req, res) => {
             });
             console.log('Esto es la suma: ' + sum);
             res.status(200).json({ count: sum });
+        }
+        else {
+            res.status(http_status_codes_1.BAD_REQUEST).json({ message: err });
+        }
+    });
+});
+router.get('/countnotificationsStore/:id', (req, res) => {
+    let id = req.params.id;
+    StoreSchema_1.default.findOne({ _id: id }).select('notify').exec((err, doc) => {
+        if (!empty(doc)) {
+            res.status(200).json({ count: doc.notify.count });
         }
         else {
             res.status(http_status_codes_1.BAD_REQUEST).json({ message: err });

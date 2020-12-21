@@ -6,27 +6,58 @@ const CustomerSchema_1 = tslib_1.__importDefault(require("../database/CustomerSc
 const FirebaseAdmin_1 = tslib_1.__importDefault(require("./FirebaseAdmin"));
 const jsonQuery = require('json-query');
 const empty = require('is-empty');
-var responsedata = [];
+var responseapp = [];
+var responseweb = [];
 exports.default = (io) => {
     io.sockets.on('connection', (socket) => {
-        socket.on('chat', (data) => {
-            save(data);
+        socket.on('chatapp', (data) => {
+            socket.emit('chatapp', data);
+            saveapp(data);
         });
-        socket.on('captureid', (data) => {
-            if (data.userid != '') {
-                let socketindex = responsedata.findIndex((dat) => { return dat.socketid == data.socketid; });
-                if (socketindex == -1) {
-                    responsedata.push({
-                        userid: data.userid,
-                        socketid: data.socketid
-                    });
-                }
+        socket.on('chatweb', (data) => {
+            socket.emit('chatweb', data);
+            saveweb(data);
+        });
+        io.sockets.emit('update', '');
+        socket.on('idweb', (data) => {
+            let socketindex = responseweb.findIndex((dat) => { return dat.socketid == data.socketid; });
+            if (socketindex == -1) {
+                responseweb.push({
+                    userid: '',
+                    storeid: data.storeid,
+                    socketid: data.socketid
+                });
             }
-            console.log(responsedata);
+            console.log(responseweb);
+        });
+        socket.on('mapstateweb', (data) => {
+            let storeindex = responseweb.findIndex((dat) => { return dat.storeid == data.storeid; });
+            if (storeindex != -1) {
+                responseweb[storeindex].userid = data.userid;
+            }
+            console.log(responseweb);
+        });
+        socket.on('idapp', (data) => {
+            let socketindex = responseapp.findIndex((dat) => { return dat.socketid == data.socketid; });
+            if (socketindex == -1) {
+                responseapp.push({
+                    productid: '',
+                    userid: data.userid,
+                    socketid: data.socketid
+                });
+            }
+            console.log(responseapp);
+        });
+        socket.on('mapstateapp', (data) => {
+            let indexuser = responseapp.findIndex((dat) => { return dat.userid == data.userid; });
+            if (indexuser != -1) {
+                responseapp[indexuser].productid = data.productid;
+            }
+            console.log(responseapp);
         });
         socket.on('shopping', (data) => {
             console.log(data);
-            let result = jsonQuery('[*userid=' + data.userid + ']', { data: responsedata }).value;
+            let result = jsonQuery('[*userid=' + data.userid + ']', { data: responseweb }).value;
             if (!empty(result)) {
                 result.forEach((element) => {
                     io.sockets.to(element.socketid).emit('notify1', '');
@@ -58,215 +89,223 @@ exports.default = (io) => {
             }
         });
         socket.on('disconnect', () => {
-            let socketindex = responsedata.findIndex((dat) => { return dat.socketid == socket.id; });
-            responsedata.splice(socketindex, 1);
-            console.log(responsedata);
+            let socketindex = responseapp.findIndex((dat) => { return dat.socketid == socket.id; });
+            let socketindex2 = responseweb.findIndex((dat) => { return dat.socketid == socket.id; });
+            if (socketindex != -1) {
+                responseapp.splice(socketindex, 1);
+            }
+            if (socketindex2 != 1) {
+                responseweb.splice(socketindex2, 1);
+            }
         });
     });
     const notification_options = {
         priority: "high",
         timeToLive: 60 * 60 * 24
     };
-    function save(data) {
+    function saveweb(data) {
         let productid = data.productid;
         let userid = data.userid;
         let storeid = data.storeid;
-        let creattor = data.creattor;
+        let sellerid = data.sellerid;
+        let name = data.name;
+        let message = data.message;
+        let chatid = data.chatid;
+        let options = notification_options;
+        StoreSchema_1.default.findOne({ _id: storeid }).select('products').exec((err, doc) => tslib_1.__awaiter(this, void 0, void 0, function* () {
+            let indexproduct = doc.products.findIndex((dat) => { return dat._id == productid; });
+            let notification_create = false;
+            let indexchat = doc.products[indexproduct].chat.findIndex((dat) => { return dat._id == chatid; });
+            doc.products[indexproduct].chat[indexchat].messages.push({
+                idtype: sellerid,
+                name,
+                message
+            });
+            let arr = jsonQuery('[*userid=' + userid + ']', { data: responseapp }).value;
+            let result = jsonQuery('[*productid=' + productid + ']', { data: arr }).value;
+            console.log(result);
+            if (!empty(result)) {
+                result.forEach((element) => {
+                    if (productid == element.productid) {
+                        io.sockets.to(element.socketid).emit('chatapp', {
+                            idtype: userid,
+                            name,
+                            message
+                        });
+                    }
+                });
+            }
+            else {
+                let user = yield CustomerSchema_1.default.findOne({ _id: userid }).select('notify tokenFirebase');
+                let indexnotify = user.notify.findIndex((dat) => { return dat.chatid == chatid; });
+                if (indexnotify == -1) {
+                    user.notify.push({
+                        typenotification: 0,
+                        productid,
+                        storeid,
+                        chatid,
+                        name,
+                        message,
+                        count: 1,
+                        date: new Date()
+                    });
+                }
+                else {
+                    user.notify[indexnotify].count++;
+                    user.notify[indexnotify].date = new Date();
+                    user.notify[indexnotify].name = name;
+                    user.notify[indexnotify].message = message;
+                }
+                CustomerSchema_1.default.findByIdAndUpdate(user._id, user, (err2, doc2) => {
+                    let result2 = jsonQuery('[*userid=' + userid + ']', { data: responseapp }).value;
+                    if (!empty(result2)) {
+                        result2.forEach((element) => {
+                            io.sockets.to(element.socketid).emit('notify1', '');
+                            io.sockets.to(element.socketid).emit('notify2', '');
+                        });
+                    }
+                    else {
+                        const message_notification = {
+                            notification: {
+                                title: name,
+                                body: message
+                            },
+                        };
+                        doc2.tokenFirebase.forEach((element) => {
+                            FirebaseAdmin_1.default.messaging().sendToDevice(element, message_notification, options)
+                                .then((response) => {
+                                console.log("Notification sent successfully");
+                            })
+                                .catch((error) => {
+                                console.log(error);
+                            });
+                        });
+                    }
+                });
+            }
+            StoreSchema_1.default.findByIdAndUpdate(doc._id, doc, () => {
+                console.log('store update');
+            });
+        }));
+    }
+    function saveapp(data) {
+        let productid = data.productid;
+        let userid = data.userid;
+        let storeid = data.storeid;
         let name = data.name;
         let message = data.message;
         let options = notification_options;
-        StoreSchema_1.default.findOne({ _id: storeid }).select('idcustomer products').exec((err, doc) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-            let prodindex = doc.products.findIndex((dat) => { return dat._id == productid; });
-            let prod = doc.products[prodindex];
-            if (!empty(data.chatid) && data.chatid != '') {
-                let chatid = data.chatid;
-                let indexchat = prod.chat.findIndex((dat) => { return dat._id == chatid; });
-                let user = yield CustomerSchema_1.default.findOne({ _id: (userid == doc.idcustomer ? prod.chat[indexchat].clientid : doc.idcustomer) }).select('notify tokenFirebase');
-                if (userid == doc.idcustomer) {
-                    let result1 = jsonQuery('[*userid=' + userid + ']', { data: responsedata }).value;
-                    let result2 = jsonQuery('[*userid=' + prod.chat[indexchat].clientid + ']', { data: responsedata }).value;
-                    if (!empty(result1)) {
-                        result1.forEach((element) => {
-                            io.sockets.to(element.socketid).emit('chat', data);
-                            io.sockets.to(element.socketid).emit('notify1', '');
-                            io.sockets.to(element.socketid).emit('notify2', '');
-                        });
-                    }
-                    if (!empty(result2)) {
-                        result2.forEach((element) => {
-                            io.sockets.to(element.socketid).emit('chat', data);
-                            io.sockets.to(element.socketid).emit('notify1', '');
-                            io.sockets.to(element.socketid).emit('notify2', '');
-                        });
-                    }
-                    else {
-                        const message_notification = {
-                            notification: {
-                                title: name,
-                                body: message
-                            },
-                            data: {
-                                prueba: 'prueba desde mi mensajeria'
-                            }
-                        };
-                        user.tokenFirebase.forEach((element, i) => {
-                            FirebaseAdmin_1.default.messaging().sendToDevice(element, message_notification, options)
-                                .then((response) => {
-                                console.log("Notification sent successfully");
-                            })
-                                .catch((error) => {
-                                console.log(error);
-                            });
-                        });
-                    }
-                }
-                else {
-                    let result1 = jsonQuery('[*userid=' + userid + ']', { data: responsedata }).value;
-                    let result2 = jsonQuery('[*userid=' + doc.idcustomer + ']', { data: responsedata }).value;
-                    if (!empty(result1)) {
-                        result1.forEach((element) => {
-                            io.sockets.to(element.socketid).emit('chat', data);
-                            io.sockets.to(element.socketid).emit('notify1', '');
-                            io.sockets.to(element.socketid).emit('notify2', '');
-                        });
-                    }
-                    if (!empty(result2)) {
-                        result2.forEach((element) => {
-                            io.sockets.to(element.socketid).emit('chat', data);
-                            io.sockets.to(element.socketid).emit('notify1', '');
-                            io.sockets.to(element.socketid).emit('notify2', '');
-                        });
-                    }
-                    else {
-                        const message_notification = {
-                            notification: {
-                                title: name,
-                                body: message
-                            },
-                            data: {
-                                prueba: 'prueba desde mi mensajeria'
-                            }
-                        };
-                        user.tokenFirebase.forEach((element, i) => {
-                            FirebaseAdmin_1.default.messaging().sendToDevice(element, message_notification, options)
-                                .then((response) => {
-                                console.log("Notification sent successfully");
-                            })
-                                .catch((error) => {
-                                console.log(error);
-                            });
-                        });
-                    }
-                }
-                doc.products[prodindex].chat[indexchat].messages.push({
+        StoreSchema_1.default.findOne({ _id: storeid }).select('products notify tokenFirebase').exec((err, doc) => {
+            let indexproduct = doc.products.findIndex((dat) => { return dat._id == productid; });
+            let chatid = '';
+            let notification_create = false;
+            if (!empty(data.chatid)) {
+                chatid = data.chatid;
+                let indexchat = doc.products[indexproduct].chat.findIndex((dat) => { return dat._id == chatid; });
+                doc.products[indexproduct].chat[indexchat].messages.push({
                     idtype: userid,
                     name,
                     message
                 });
-                let indexnotify = user.notify.findIndex((dat) => { return dat.chatid == chatid; });
-                if (indexnotify == -1) {
-                    user.notify.push({
-                        typenotification: 0,
-                        productid,
-                        storeid,
-                        chatid,
-                        creattor,
-                        name,
-                        count: 1,
-                        date: new Date()
-                    });
-                }
-                else {
-                    user.notify[indexnotify].count += 1;
-                    user.notify[indexnotify].date = new Date();
-                }
-                CustomerSchema_1.default.findByIdAndUpdate(user._id, user, () => {
-                    console.log('user notify with id chat');
-                });
-            }
-            else {
-                let indexchat = prod.chat.findIndex((dat) => { return dat.clientid == userid; });
-                let user = yield CustomerSchema_1.default.findOne({ _id: creattor }).select('notify tokenFirebase');
-                let result1 = jsonQuery('[*userid=' + userid + ']', { data: responsedata }).value;
-                let result2 = jsonQuery('[*userid=' + creattor + ']', { data: responsedata }).value;
-                if (!empty(result1)) {
-                    result1.forEach((element) => {
-                        io.sockets.to(element.socketid).emit('chat', data);
-                        io.sockets.to(element.socketid).emit('notify1', '');
-                        io.sockets.to(element.socketid).emit('notify2', '');
-                    });
-                }
-                if (!empty(result2)) {
-                    result2.forEach((element) => {
-                        io.sockets.to(element.socketid).emit('chat', data);
-                        io.sockets.to(element.socketid).emit('notify1', '');
-                        io.sockets.to(element.socketid).emit('notify2', '');
-                    });
-                }
-                else {
-                    const message_notification = {
-                        notification: {
-                            title: name,
-                            body: message
-                        },
-                        data: {
-                            prueba: 'prueba desde mi mensajeria'
-                        }
-                    };
-                    user.tokenFirebase.forEach((element, i) => {
-                        FirebaseAdmin_1.default.messaging().sendToDevice(element, message_notification, options)
-                            .then((response) => {
-                            console.log("Notification sent successfully");
-                        })
-                            .catch((error) => {
-                            console.log(error);
+                let arr = jsonQuery('[*storeid=' + storeid + ']', { data: responseweb }).value;
+                let result = jsonQuery('[*userid=' + userid + ']', { data: arr }).value;
+                if (!empty(result)) {
+                    result.forEach((element) => {
+                        io.sockets.to(element.socketid).emit('chatweb', {
+                            idtype: userid,
+                            name,
+                            message
                         });
                     });
                 }
-                let chatid;
-                if (indexchat == -1) {
-                    doc.products[prodindex].chat.push({
-                        clientid: userid,
-                        messages: [{
-                                idtype: userid,
-                                name,
-                                message
-                            }]
-                    });
-                    chatid = doc.products[prodindex].chat[doc.products[prodindex].chat.length - 1]._id;
-                }
                 else {
-                    doc.products[prodindex].chat[indexchat].messages.push({
-                        idtype: userid,
-                        name,
-                        message
-                    });
-                    chatid = doc.products[prodindex].chat[indexchat]._id;
+                    notification_create = true;
+                    let indexnotify = doc.notify.chats.findIndex((dat) => { return dat.chatid == chatid; });
+                    if (indexnotify == -1) {
+                        doc.notify.count++;
+                        doc.notify.chats.push({
+                            chatid,
+                            userid,
+                            name,
+                            productid,
+                            message,
+                            count: 1,
+                            date: new Date()
+                        });
+                    }
+                    else {
+                        if (doc.notify.chats[indexnotify].count == 0) {
+                            doc.notify.count++;
+                        }
+                        doc.notify.chats[indexnotify].count++;
+                        doc.notify.chats[indexnotify].date = new Date();
+                        doc.notify.chats[indexnotify].name = name;
+                        doc.notify.chats[indexnotify].message = message;
+                    }
                 }
-                let indexnotify = user.notify.findIndex((dat) => { return dat.chatid == chatid; });
+            }
+            else {
+                doc.products[indexproduct].chat.push({
+                    clientid: userid,
+                    messages: [{
+                            idtype: userid,
+                            name,
+                            message
+                        }]
+                });
+                chatid = doc.products[indexproduct].chat[doc.products[indexproduct].chat.length - 1]._id;
+                notification_create = true;
+                let indexnotify = doc.notify.chats.findIndex((dat) => { return dat.chatid == chatid; });
                 if (indexnotify == -1) {
-                    user.notify.push({
-                        typenotification: 0,
-                        productid,
-                        storeid,
+                    doc.notify.count++;
+                    doc.notify.chats.push({
                         chatid,
-                        creattor,
+                        userid,
                         name,
+                        productid,
+                        message,
                         count: 1,
                         date: new Date()
                     });
                 }
                 else {
-                    user.notify[indexnotify].count += 1;
-                    user.notify[indexnotify].date = new Date();
+                    if (doc.notify.chats[indexnotify].count == 0) {
+                        doc.notify.count++;
+                    }
+                    doc.notify.chats[indexnotify].count++;
+                    doc.notify.chats[indexnotify].date = new Date();
+                    doc.notify.chats[indexnotify].name = name;
+                    doc.notify.chats[indexnotify].message = message;
                 }
-                CustomerSchema_1.default.findByIdAndUpdate(user._id, user, () => {
-                    console.log('user notify with id chat');
-                });
             }
             StoreSchema_1.default.findByIdAndUpdate(doc._id, doc, () => {
-                console.log('product update');
+                if (notification_create) {
+                    let result2 = jsonQuery('[*storeid=' + storeid + ']', { data: responseweb }).value;
+                    if (!empty(result2)) {
+                        result2.forEach((element) => {
+                            io.sockets.to(element.socketid).emit('notify2', '');
+                            io.sockets.to(element.socketid).emit('notify1', '');
+                        });
+                    }
+                    else {
+                        const message_notification = {
+                            notification: {
+                                title: name,
+                                body: message
+                            },
+                        };
+                        doc.tokenFirebase.forEach((element) => {
+                            FirebaseAdmin_1.default.messaging().sendToDevice(element, message_notification, options)
+                                .then((response) => {
+                                console.log("Notification sent successfully");
+                            })
+                                .catch((error) => {
+                                console.log(error);
+                            });
+                        });
+                    }
+                }
             });
-        }));
+        });
     }
 };
