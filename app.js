@@ -29,7 +29,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(cors({
-  origin: 'https://mercadoxpress.herokuapp.com',
+  origin: '*',
   allowedHeaders:'X-Requested-With,content-type',
   methods:'GET, POST, OPTIONS, PUT, PATCH, DELETE',
   credentials:true
