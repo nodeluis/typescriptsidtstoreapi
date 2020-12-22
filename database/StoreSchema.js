@@ -17,6 +17,7 @@ const storeSchema = new StoreSchema({
     idcustomer: String,
     realpathphoto: String,
     verify: Boolean,
+    tokenFirebase: [],
     stars: [
         {
             iduser: Connect_1.default.Types.ObjectId,
@@ -89,6 +90,19 @@ const storeSchema = new StoreSchema({
             card: String,
             textcard: String
         }
+    },
+    notify: {
+        count: Number,
+        buys: [{}],
+        chats: [{
+                chatid: String,
+                userid: String,
+                productid: String,
+                name: String,
+                message: String,
+                count: Number,
+                date: Date
+            }]
     }
 });
 const modelStoreSchema = Connect_1.default.model("store", storeSchema);

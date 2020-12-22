@@ -18,16 +18,16 @@ const NotificationService_1 = tslib_1.__importDefault(require("./services/Notifi
 const ShoppingCartService_1 = tslib_1.__importDefault(require("./services/ShoppingCartService"));
 const AccountVerifyService_1 = tslib_1.__importDefault(require("./services/AccountVerifyService"));
 const Logger_1 = tslib_1.__importDefault(require("./shared/Logger"));
-const express_fileupload_1 = tslib_1.__importDefault(require("express-fileupload"));
+//const express_fileupload_1 = tslib_1.__importDefault(require("express-fileupload"));
 const cors_1 = tslib_1.__importDefault(require("cors"));
 const app = express_1.default();
 app.use(cors_1.default());
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use(cookie_parser_1.default());
-app.use(express_fileupload_1.default({
+/*app.use(express_fileupload_1.default({
     limits: { fileSize: 50 * 1024 * 1024 },
-}));
+}));*/
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan_1.default('dev'));
 }
@@ -57,7 +57,7 @@ app.get('*', (req, res) => {
     res.sendFile('index.html', { root: viewsDir });
 });
 
-/*const http_1 = tslib_1.__importDefault(require("http"));
+const http_1 = tslib_1.__importDefault(require("http"));
 const socket_io_1 = tslib_1.__importDefault(require("socket.io"));
 const server = http_1.default.createServer(app);
 const io = socket_io_1.default.listen(server);
@@ -67,6 +67,6 @@ ChatService_1.default(io);
 server.listen(8000,()=>{
   console.log('listen 8000');
   
-});*/
+});
 
 exports.default = app;

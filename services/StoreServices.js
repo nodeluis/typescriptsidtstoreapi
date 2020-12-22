@@ -18,7 +18,21 @@ const client = new vision.ImageAnnotatorClient({
 });
 const empty = require('is-empty');
 const router = express_1.Router();
-router.post("/createstore", (req, res) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+
+const {Storage}=require('@google-cloud/storage');
+const Multer=require('multer');
+const gc=new Storage({
+    keyFilename:__dirname + '/../apivisiongoogle.json',
+    projectId:'rosy-environs-268816'
+});
+
+const multer=Multer({
+    storage:Multer.memoryStorage()
+});
+
+const bucket=gc.bucket(process.env.GCLOUD_STORAGE_BUCKET||'bucket_prueba_sis719_2');
+
+router.post("/createstore",multer.single('banner'), (req, res) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     var body = req.body;
     var id = req.body.idcustomer;
     var storeverification = yield StoreSchema_1.default.findOne({ idcustomer: id }).select('idcustomer');
@@ -27,21 +41,27 @@ router.post("/createstore", (req, res) => tslib_1.__awaiter(void 0, void 0, void
         return;
     }
     let path = '';
-    if (!empty(req.files)) {
-        let files = req.files;
-        let file = files.banner;
+    if (!empty(req.file)) {
         let date = new Date();
         let token = sha1_1.default(date.toString()).substr(0, 7);
-        let namebanner = token + "_" + file.name;
-        yield file.mv(__dirname + '/../bannerfiles/store/' + namebanner, (err) => {
-            if (err) {
-                console.log(err);
-                return;
-            }
+        const blob=bucket.file(token+'_'+req.file.originalname);
+        const blobStream=blob.createWriteStream({
+            resumable:false
         });
-        body["realpathphoto"] = __dirname + '/../bannerfiles/store/' + namebanner;
+
+        blobStream.on('error',(err)=>{
+            res.json({message:err});
+        });
+
+        blobStream.on('finish',async()=>{
+            console.log('se envio');
+            
+        });
+
+        blobStream.end(req.file.buffer);
+        body["realpathphoto"] = '';
         path = '/api/v1/store/get/banner/';
-        body["banner"] = path;
+        body["banner"] = 'https://storage.googleapis.com/'+bucket.name+'/'+blob.name;
     }
     if (body == null) {
         res.status(http_status_codes_1.OK).json({ errorMessage: "El campo Body  está vacio" });
@@ -54,9 +74,6 @@ router.post("/createstore", (req, res) => tslib_1.__awaiter(void 0, void 0, void
         chats: []
     };
     var store = new StoreSchema_1.default(body);
-    if (path != '') {
-        store.banner += store._id;
-    }
     var result = yield store.save();
     res.status(http_status_codes_1.CREATED).json({ serverMessage: "Datos almacenados con éxito", result: result });
 }));
@@ -151,7 +168,7 @@ router.put("/updatestore", (req, res) => tslib_1.__awaiter(void 0, void 0, void 
     var result = yield StoreSchema_1.default.update({ _id: query.id }, updatedate);
     res.status(http_status_codes_1.OK).json({ serverMessage: "Correcto", result });
 }));
-router.post("/product", (req, res) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+router.post("/product",multer.array('gallery',12),(req, res) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     var body = req.body;
     if (body == null) {
         res.status(http_status_codes_1.BAD_REQUEST).json({ errorMessage: "El campo Body  está vacio" });
@@ -174,14 +191,14 @@ router.post("/product", (req, res) => tslib_1.__awaiter(void 0, void 0, void 0, 
     body["storeId"] = idstore;
     body["likes"] = parseInt(body["likes"]);
     body["quantityavaliable"] = parseInt(body["quantityavaliable"]);
-    if (req.files == null) {
+    /*if (req.files == null) {
         res.status(http_status_codes_1.BAD_REQUEST).json({ errorMessage: "Se requiere una imagen por defecto" });
         return;
     }
     var files = req.files;
     let pathdefaultimage = '';
     let getdefaultimage = '';
-    if (empty(req.files.defaultimage)) {
+    if (empty(req.files)) {
         res.status(http_status_codes_1.BAD_REQUEST).json({ errorMessage: "Error al enviar la imagen por defecto" });
         return;
     }
@@ -243,6 +260,53 @@ router.post("/product", (req, res) => tslib_1.__awaiter(void 0, void 0, void 0, 
             description: req.body.photodescriptions[0],
             date: new Date(),
         });
+    }*/
+    let objectGallery = [];
+    for (let index = 0; index < req.files.length; index++) {
+        const element = req.files[index];
+        if(index==0){
+            let date = new Date();
+            let token = sha1_1.default(date.toString()).substr(0, 7);
+            const blob=bucket.file(token+'_'+element.originalname);
+            const blobStream=blob.createWriteStream({
+                resumable:false
+            });
+
+            blobStream.on('error',(err)=>{
+                res.json({message:err});
+            });
+
+            blobStream.on('finish',async()=>{
+                console.log('se envio');
+                
+            });
+
+            blobStream.end(element.buffer);
+            body["pathDefaultimage"] = '';
+            body["defaultimage"] = 'https://storage.googleapis.com/'+bucket.name+'/'+blob.name;
+        }else{
+            let date = new Date();
+            let token = sha1_1.default(date.toString()).substr(0, 7);
+            const blob=bucket.file(token+'_'+element.originalname);
+            const blobStream=blob.createWriteStream({
+                resumable:false
+            });
+
+            blobStream.on('error',(err)=>{
+                res.json({message:err});
+            });
+
+            blobStream.on('finish',async()=>{
+                console.log('se envio'); 
+            });
+            blobStream.end(element.buffer);
+            objectGallery.push({
+                realpath: '',
+                relativepath: 'https://storage.googleapis.com/'+bucket.name+'/'+blob.name,
+                description: 'description '+index,
+                date: new Date(),
+            });
+        }
     }
     body["gallery"] = objectGallery;
     var paramsrequest = Object.keys(body);
@@ -270,15 +334,15 @@ router.post("/product", (req, res) => tslib_1.__awaiter(void 0, void 0, void 0, 
         return;
     }
     var product = new ProductsSchema_1.default(body);
-    product.gallery.map((item) => {
+    /*product.gallery.map((item) => {
         item.relativepath = item.relativepath + item._id;
         return item;
     });
-    product.defaultimage += product._id;
-    if (files == null) {
+    product.defaultimage += product._id;*/
+    /*if (files == null) {
         res.status(200).json({ errorMessage: "Se requiere por lo menos una imagen en la variable 'defaultimage'" });
         return;
-    }
+    }*/
     var resultinserted = yield product.save();
     var resultupdate = yield StoreSchema_1.default.update({ _id: idstore }, { $push: { products: product } });
     res.status(http_status_codes_1.OK).json({ resultinserted, resultupdate, message: 'Tu producto se ha insertado en la tienda' });
@@ -647,7 +711,7 @@ router.post('/getCustomerStore', (req, res) => {
         }
     }));
 });
-router.post('/verifyStore', (req, res) => {
+router.post('/verifyStore',multer.single('credential'), (req, res) => {
     let id = req.body.userid;
     StoreSchema_1.default.findOne({ idcustomer: id }).select('verify storename nit city direction rubro hour phone verificationstore tokenFirebase').exec((err, doc) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         if (!empty(doc)) {
@@ -660,34 +724,51 @@ router.post('/verifyStore', (req, res) => {
             doc.hour = req.body.hour;
             doc.phone = req.body.phone;
             doc.tokenFirebase=[req.body.tokenfirebase];
-            let files = req.files;
-            let file = files.credential;
+
             let date = new Date();
             let token = sha1_1.default(date.toString()).substr(0, 7);
-            let namecard = token + "_" + file.name;
-            yield file.mv(__dirname + '/../bannerfiles/storeidentificationcards/' + namecard, (err) => {
-                if (err) {
-                    console.log(err);
-                    return;
-                }
+
+            const blob=bucket.file(token+'_'+req.file.originalname);
+            const blobStream=blob.createWriteStream({
+                resumable:false
             });
-            let path = '/api/v1/store/identification/' + namecard + '/' + doc._id;
-            const [result] = yield client.textDetection(__dirname + '/../bannerfiles/storeidentificationcards/' + namecard);
-            const detections = result.textAnnotations;
-            doc.verificationstore = {
-                avaible: true,
-                datacard: {
-                    directionpath: __dirname + '/../bannerfiles/storeidentificationcards/' + namecard,
-                    card: path,
-                    textcard: detections[0].description
-                }
-            };
-            StoreSchema_1.default.findByIdAndUpdate(doc._id, doc, () => {
-                res.status(200).json({
-                    message: 'Se verificó la tienda',
-                    storeid: doc._id
+
+            blobStream.on('error',(err)=>{
+                res.json({message:err});
+            });
+
+            blobStream.on('finish',async()=>{
+                console.log('se envio');
+                
+            });
+
+            blobStream.end(req.file.buffer);
+            let path = 'https://storage.googleapis.com/'+bucket.name+'/'+blob.name;
+
+            try {
+                const [result] = yield client.textDetection(path);
+                const detections = result.textAnnotations;
+                doc.verificationstore = {
+                    avaible: true,
+                    datacard: {
+                        directionpath:path,
+                        card: path,
+                        textcard: detections[0].description
+                    }
+                };
+                StoreSchema_1.default.findByIdAndUpdate(doc._id, doc, () => {
+                    res.status(200).json({
+                        message: 'Se verificó la tienda',
+                        storeid: doc._id
+                    });
                 });
-            });
+            } catch (error) {
+                res.status(200).json({
+                    message: 'Debe de enviar una imagen correcta',
+                    storeid: ''
+                });
+            }
+            
         }
         else {
             res.status(http_status_codes_1.BAD_REQUEST).json({

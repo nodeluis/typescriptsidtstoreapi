@@ -95,7 +95,11 @@ router.get('/countnotificationsStore/:id', (req, res) => {
     let id = req.params.id;
     StoreSchema_1.default.findOne({ _id: id }).select('notify').exec((err, doc) => {
         if (!empty(doc)) {
-            res.status(200).json({ count: doc.notify.count });
+            try {
+                res.status(200).json({ count: doc.notify.count });
+            } catch (error) {
+                res.status(200).json({ count: 0 });
+            }
         }
         else {
             res.status(http_status_codes_1.BAD_REQUEST).json({ message: err });

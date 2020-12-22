@@ -42,29 +42,56 @@ router.post('/apivision', (req, res) => tslib_1.__awaiter(void 0, void 0, void 0
     detections.forEach((text) => console.log(text));
     res.status(200).json({ message: 'funciona' });
 }));
-router.post('/identificationcard', (req, res) => {
+
+
+const {Storage}=require('@google-cloud/storage');
+const Multer=require('multer');
+const gc=new Storage({
+    keyFilename:__dirname + '/../apivisiongoogle.json',
+    projectId:'rosy-environs-268816'
+});
+
+const multer=Multer({
+    storage:Multer.memoryStorage()
+});
+
+const bucket=gc.bucket(process.env.GCLOUD_STORAGE_BUCKET||'bucket_prueba_sis719_2');
+
+router.post('/identificationcard',multer.single('img'), (req, res) => {
     let files = req.files;
     let userid = req.body.userid;
     console.log(files);
     CustomerSchema_1.default.findOne({ _id: userid }).select('verificationUser').exec((err, doc) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         if (!empty(doc)) {
-            let file = files.img;
             let date = new Date();
             let token = sha1_1.default(date.toString()).substr(0, 7);
-            let nameAccount = token + "_" + file.name;
-            yield file.mv(__dirname + '/../datauserimages/' + nameAccount, (err) => {
-                if (err) {
-                    console.log(err);
-                    return;
-                }
+
+            const blob=bucket.file(token+'_'+req.file.originalname);
+            const blobStream=blob.createWriteStream({
+                resumable:false
             });
+
+            blobStream.on('error',(err)=>{
+                res.json({message:err});
+            });
+
+            blobStream.on('finish',async()=>{
+                console.log('se envio');
+                
+            });
+
+            blobStream.end(req.file.buffer);
+            let path = 'https://storage.googleapis.com/'+bucket.name+'/'+blob.name;
+
             try {
+                const [result] = yield client.textDetection(path);
+                const detections = result.textAnnotations;
                 doc.verificationUser.dataIdentificationCard = {
                     avaible: true,
-                    photo: __dirname + '/../datauserimages/' + nameAccount,
-                    getPhoto: '/api/v1/customer/dataIdentificationCard/' + doc._id,
+                    photo:'',
+                    getPhoto: path,
                     textCard: {
-                        textIdentification: ''
+                        textIdentification: detections[0].description
                     }
                 };
                 CustomerSchema_1.default.findByIdAndUpdate(doc._id, doc, () => {
