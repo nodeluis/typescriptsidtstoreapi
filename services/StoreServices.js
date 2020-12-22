@@ -728,21 +728,21 @@ router.post('/verifyStore',multer.single('credential'), (req, res) => {
             let date = new Date();
             let token = sha1_1.default(date.toString()).substr(0, 7);
 
-            const blob=bucket.file(token+'_'+req.file.originalname);
-            const blobStream=blob.createWriteStream({
+            const blob=yield bucket.file(token+'_'+req.file.originalname);
+            const blobStream=yield blob.createWriteStream({
                 resumable:false
             });
 
-            blobStream.on('error',(err)=>{
+            yield blobStream.on('error',(err)=>{
                 res.json({message:err});
             });
 
-            blobStream.on('finish',async()=>{
+            yield blobStream.on('finish',async()=>{
                 console.log('se envio');
                 
             });
 
-            blobStream.end(req.file.buffer);
+            yield blobStream.end(req.file.buffer);
             let path = 'https://storage.googleapis.com/'+bucket.name+'/'+blob.name;
 
             try {
