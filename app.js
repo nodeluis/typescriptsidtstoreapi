@@ -1,13 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const tslib_1 = require("tslib");
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
-var cors = require('cors');
-
+const cookie_parser_1 = tslib_1.__importDefault(require("cookie-parser"));
+const morgan_1 = tslib_1.__importDefault(require("morgan"));
+const path_1 = tslib_1.__importDefault(require("path"));
+const helmet_1 = tslib_1.__importDefault(require("helmet"));
+const express_1 = tslib_1.__importDefault(require("express"));
+const http_status_codes_1 = require("http-status-codes");
+require("express-async-errors");
 const MainSevice_1 = tslib_1.__importDefault(require("./services/MainSevice"));
 const adminservices_1 = tslib_1.__importDefault(require("./services/adminservices"));
 const CustomerService_1 = tslib_1.__importDefault(require("./services/CustomerService"));
@@ -17,31 +17,23 @@ const SearchService_1 = tslib_1.__importDefault(require("./services/SearchServic
 const NotificationService_1 = tslib_1.__importDefault(require("./services/NotificationService"));
 const ShoppingCartService_1 = tslib_1.__importDefault(require("./services/ShoppingCartService"));
 const AccountVerifyService_1 = tslib_1.__importDefault(require("./services/AccountVerifyService"));
-var app = express();
-
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
-
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
-
-app.use(function(req, res, next) {
-  res.header('Access-Control-Allow-Origin', req.get('Origin') || '*');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE');
-  res.header('Access-Control-Expose-Headers', 'Content-Length');
-  res.header('Access-Control-Allow-Headers', 'Accept, Authorization, Content-Type, X-Requested-With, Range');
-  if (req.method === 'OPTIONS') {
-    return res.send(200);
-  } else {
-    return next();
-  }
-});
-
+const Logger_1 = tslib_1.__importDefault(require("./shared/Logger"));
+const express_fileupload_1 = tslib_1.__importDefault(require("express-fileupload"));
+const cors_1 = tslib_1.__importDefault(require("cors"));
+const app = express_1.default();
+app.use(cors_1.default());
+app.use(express_1.default.json());
+app.use(express_1.default.urlencoded({ extended: true }));
+app.use(cookie_parser_1.default());
+app.use(express_fileupload_1.default({
+    limits: { fileSize: 50 * 1024 * 1024 },
+}));
+if (process.env.NODE_ENV === 'development') {
+    app.use(morgan_1.default('dev'));
+}
+if (process.env.NODE_ENV === 'production') {
+    app.use(helmet_1.default());
+}
 app.use('/', MainSevice_1.default);
 app.use('/admin', adminservices_1.default);
 app.use('/api/v1/customer', CustomerService_1.default);
@@ -51,26 +43,30 @@ app.use('/api/v1/search', SearchService_1.default);
 app.use('/api/v1/notify', NotificationService_1.default);
 app.use('/api/v1/cart', ShoppingCartService_1.default);
 app.use('/api/v1/account', AccountVerifyService_1.default);
-
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
+app.use((err, req, res, next) => {
+    Logger_1.default.error(err.message, err);
+    return res.status(http_status_codes_1.BAD_REQUEST).json({
+        error: err.message,
+    });
+});
+const viewsDir = path_1.default.join(__dirname, 'views');
+app.set('views', viewsDir);
+const staticDir = path_1.default.join(__dirname, 'public');
+app.use(express_1.default.static(staticDir));
+app.get('*', (req, res) => {
+    res.sendFile('index.html', { root: viewsDir });
 });
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+/*const http_1 = tslib_1.__importDefault(require("http"));
+const socket_io_1 = tslib_1.__importDefault(require("socket.io"));
+const server = http_1.default.createServer(app);
+const io = socket_io_1.default.listen(server);
+const ChatService_1 = tslib_1.__importDefault(require("./services/ChatService"));
+ChatService_1.default(io);
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
-
-app.listen(8000,()=>{
-  console.log('escuchando en le puerto 8000');
+server.listen(8000,()=>{
+  console.log('listen 8000');
   
-});
+});*/
 
-module.exports = app;
+exports.default = app;
