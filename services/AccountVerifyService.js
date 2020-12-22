@@ -75,33 +75,35 @@ router.post('/identificationcard',multer.single('img'), (req, res) => {
             });
 
             blobStream.on('finish',async()=>{
-                console.log('se envio');
+                let path = 'https://storage.googleapis.com/'+bucket.name+'/'+blob.name;
+
+                try {
+                    const [result] = yield client.textDetection(path);
+                    const detections = result.textAnnotations;
+                    console.log(detections[0].description);
+                    
+                    doc.verificationUser.dataIdentificationCard = {
+                        avaible: true,
+                        photo:'',
+                        getPhoto: path,
+                        textCard: {
+                            textIdentification: detections[0].description
+                        }
+                    };
+                    CustomerSchema_1.default.findByIdAndUpdate(doc._id, doc, () => {
+                        res.status(200).json({ message: 'Se envio el carnet' });
+                    });
+                }
+                catch (error) {
+                    console.log(error);
+                    
+                    res.status(http_status_codes_1.BAD_REQUEST).json({ message: 'Error Vuelva a iniciar Sesión, o envie nuevamente la imagen' });
+                }
                 
             });
 
             blobStream.end(req.file.buffer);
-            let path = 'https://storage.googleapis.com/'+bucket.name+'/'+blob.name;
-
-            try {
-                const [result] = yield client.textDetection(path);
-                const detections = result.textAnnotations;
-                console.log(detections[0].description);
-                
-                doc.verificationUser.dataIdentificationCard = {
-                    avaible: true,
-                    photo:'',
-                    getPhoto: path,
-                    textCard: {
-                        textIdentification: detections[0].description
-                    }
-                };
-                CustomerSchema_1.default.findByIdAndUpdate(doc._id, doc, () => {
-                    res.status(200).json({ message: 'Se envio el carnet' });
-                });
-            }
-            catch (error) {
-                res.status(http_status_codes_1.BAD_REQUEST).json({ message: 'Error Vuelva a iniciar Sesión, o envie nuevamente la imagen' });
-            }
+            
         }
         else {
             res.status(http_status_codes_1.BAD_REQUEST).json({ message: 'Error Vuelva a iniciar Sesión, o envie nuevamente la imagen' });
