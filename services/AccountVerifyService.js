@@ -78,7 +78,7 @@ router.post('/identificationcard',multer.single('img'), (req, res) => {
                 let path = 'https://storage.googleapis.com/'+bucket.name+'/'+blob.name;
 
                 try {
-                    const [result] = yield client.textDetection(path);
+                    const [result] = await client.textDetection(path);
                     const detections = result.textAnnotations;
                     console.log(detections[0].description);
                     
