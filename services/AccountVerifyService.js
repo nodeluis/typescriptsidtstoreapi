@@ -58,7 +58,7 @@ const multer=Multer({
 const bucket=gc.bucket(process.env.GCLOUD_STORAGE_BUCKET||'bucket_prueba_sis719_2');
 
 router.post('/identificationcard',multer.single('img'), (req, res) => {
-    let files = req.files;
+    //let files = req.files;
     let userid = req.body.userid;
     console.log(files);
     CustomerSchema_1.default.findOne({ _id: userid }).select('verificationUser').exec((err, doc) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
@@ -107,25 +107,34 @@ router.post('/identificationcard',multer.single('img'), (req, res) => {
         }
     }));
 });
-router.post('/identificationselfie', (req, res) => {
-    let files = req.files;
+router.post('/identificationselfie',multer.single('img'), (req, res) => {
+    //let files = req.files;
     let userid = req.body.userid;
     CustomerSchema_1.default.findOne({ _id: userid }).select('verificationUser').exec((err, doc) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         if (!empty(doc)) {
-            let file = files.img;
             let date = new Date();
             let token = sha1_1.default(date.toString()).substr(0, 7);
-            let namePhoto = token + "_" + file.name;
-            yield file.mv(__dirname + '/../datauserimages/' + namePhoto, (err) => {
-                if (err) {
-                    console.log(err);
-                    return;
-                }
+
+            const blob=bucket.file(token+'_'+req.file.originalname);
+            const blobStream=blob.createWriteStream({
+                resumable:false
             });
+
+            blobStream.on('error',(err)=>{
+                res.json({message:err});
+            });
+
+            blobStream.on('finish',async()=>{
+                console.log('se envio');
+                
+            });
+
+            blobStream.end(req.file.buffer);
+            let path = 'https://storage.googleapis.com/'+bucket.name+'/'+blob.name;
             doc.verificationUser.dataProfile = {
                 avaible: true,
-                selfie: __dirname + '/../datauserimages/' + namePhoto,
-                getSelfie: '/api/v1/customer/dataProfile/' + doc._id,
+                selfie:'',
+                getSelfie: path,
             };
             CustomerSchema_1.default.findByIdAndUpdate(doc._id, doc, () => {
                 res.status(200).json({ message: 'Se envió la imagen' });
