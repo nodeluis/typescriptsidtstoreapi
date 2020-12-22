@@ -9,7 +9,7 @@ const socket_io_1 = tslib_1.__importDefault(require("socket.io"));
 const server = http_1.default.createServer(_server_1.default);
 const io = socket_io_1.default.listen(server);
 const ChatService_1 = tslib_1.__importDefault(require("../services/ChatService"));
-io.set('origins', '*');
+io.set('origins', '*:*');
 ChatService_1.default(io);
 const port = Number(process.env.PORT || 3000);
 server.listen(port, () => {
