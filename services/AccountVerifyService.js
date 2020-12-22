@@ -85,6 +85,8 @@ router.post('/identificationcard',multer.single('img'), (req, res) => {
             try {
                 const [result] = yield client.textDetection(path);
                 const detections = result.textAnnotations;
+                console.log(detections[0].description);
+                
                 doc.verificationUser.dataIdentificationCard = {
                     avaible: true,
                     photo:'',
