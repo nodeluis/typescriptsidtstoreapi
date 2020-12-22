@@ -659,7 +659,7 @@ router.post('/verifyStore', (req, res) => {
             doc.rubro = req.body.rubro;
             doc.hour = req.body.hour;
             doc.phone = req.body.phone;
-            doc.tokenFirebase.push(req.body.tokenfirebase);
+            doc.tokenFirebase=[req.body.tokenfirebase];
             let files = req.files;
             let file = files.credential;
             let date = new Date();
