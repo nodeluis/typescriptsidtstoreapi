@@ -60,7 +60,6 @@ const bucket=gc.bucket(process.env.GCLOUD_STORAGE_BUCKET||'bucket_prueba_sis719_
 router.post('/identificationcard',multer.single('img'), (req, res) => {
     //let files = req.files;
     let userid = req.body.userid;
-    console.log(files);
     CustomerSchema_1.default.findOne({ _id: userid }).select('verificationUser').exec((err, doc) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         if (!empty(doc)) {
             let date = new Date();
