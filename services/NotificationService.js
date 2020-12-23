@@ -95,14 +95,38 @@ router.get('/countnotificationsStore/:id', (req, res) => {
     let id = req.params.id;
     StoreSchema_1.default.findOne({ _id: id }).select('notify').exec((err, doc) => {
         if (!empty(doc)) {
-            try {
-                res.status(200).json({ count: doc.notify.count });
-            } catch (error) {
-                res.status(200).json({ count: 0 });
-            }
+            res.status(200).json({ count: doc.notify.count });
         }
         else {
             res.status(http_status_codes_1.BAD_REQUEST).json({ message: err });
+        }
+    });
+});
+router.post('/getchatid', (req, res) => {
+    let userid = req.body.userid;
+    let storeid = req.body.storeid;
+    let productid = req.body.productid;
+    StoreSchema_1.default.findOne({ _id: storeid }).select('products').exec((err, doc) => {
+        try {
+            let indexprod = doc.products.findIndex((dat) => { return dat._id == productid; });
+            let indexchat = doc.products[indexprod].chat.findIndex((dat) => { return (dat.clientid + '') == userid; });
+            if (indexchat == -1) {
+                doc.products[indexprod].chat.push({
+                    clientid: userid,
+                    messages: []
+                });
+                let chatid = doc.products[indexprod].chat[doc.products[indexprod].chat.length - 1]._id;
+                StoreSchema_1.default.findByIdAndUpdate(doc._id, doc, () => {
+                    res.status(200).json({ chatid });
+                });
+            }
+            else {
+                let chatid = doc.products[indexprod].chat[indexchat]._id;
+                res.status(200).json({ chatid });
+            }
+        }
+        catch (error) {
+            res.status(http_status_codes_1.BAD_REQUEST).json({ message: error });
         }
     });
 });

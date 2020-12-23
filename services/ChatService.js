@@ -23,19 +23,23 @@ exports.default = (io) => {
             let socketindex = responseweb.findIndex((dat) => { return dat.socketid == data.socketid; });
             if (socketindex == -1) {
                 responseweb.push({
-                    userid: '',
                     storeid: data.storeid,
+                    userid: '',
                     socketid: data.socketid
                 });
             }
-            console.log(responseweb);
         });
         socket.on('mapstateweb', (data) => {
-            let storeindex = responseweb.findIndex((dat) => { return dat.storeid == data.storeid; });
-            if (storeindex != -1) {
-                responseweb[storeindex].userid = data.userid;
+            let socketindex = responseweb.findIndex((dat) => { return dat.socketid == data.socketid; });
+            if (socketindex != -1) {
+                responseweb[socketindex].userid = data.userid;
             }
-            console.log(responseweb);
+        });
+        socket.on('leaveweb', (data) => {
+            let socketindex = responseweb.findIndex((dat) => { return dat.socketid == data.socketid; });
+            if (socketindex != -1) {
+                responseweb[socketindex].userid = '';
+            }
         });
         socket.on('idapp', (data) => {
             let socketindex = responseapp.findIndex((dat) => { return dat.socketid == data.socketid; });
@@ -46,14 +50,18 @@ exports.default = (io) => {
                     socketid: data.socketid
                 });
             }
-            console.log(responseapp);
         });
         socket.on('mapstateapp', (data) => {
             let indexuser = responseapp.findIndex((dat) => { return dat.userid == data.userid; });
             if (indexuser != -1) {
                 responseapp[indexuser].productid = data.productid;
             }
-            console.log(responseapp);
+        });
+        socket.on('leaveapp', (data) => {
+            let indexuser = responseapp.findIndex((dat) => { return dat.userid == data.userid; });
+            if (indexuser != -1) {
+                responseapp[indexuser].productid = '';
+            }
         });
         socket.on('shopping', (data) => {
             console.log(data);
@@ -123,16 +131,13 @@ exports.default = (io) => {
             });
             let arr = jsonQuery('[*userid=' + userid + ']', { data: responseapp }).value;
             let result = jsonQuery('[*productid=' + productid + ']', { data: arr }).value;
-            console.log(result);
             if (!empty(result)) {
                 result.forEach((element) => {
-                    if (productid == element.productid) {
-                        io.sockets.to(element.socketid).emit('chatapp', {
-                            idtype: userid,
-                            name,
-                            message
-                        });
-                    }
+                    io.sockets.to(element.socketid).emit('chatapp', {
+                        userid: sellerid,
+                        name,
+                        message
+                    });
                 });
             }
             else {
@@ -195,65 +200,28 @@ exports.default = (io) => {
         let name = data.name;
         let message = data.message;
         let options = notification_options;
+        let chatid = data.chatid;
         StoreSchema_1.default.findOne({ _id: storeid }).select('products notify tokenFirebase').exec((err, doc) => {
             let indexproduct = doc.products.findIndex((dat) => { return dat._id == productid; });
-            let chatid = '';
             let notification_create = false;
-            if (!empty(data.chatid)) {
-                chatid = data.chatid;
-                let indexchat = doc.products[indexproduct].chat.findIndex((dat) => { return dat._id == chatid; });
-                doc.products[indexproduct].chat[indexchat].messages.push({
-                    idtype: userid,
-                    name,
-                    message
-                });
-                let arr = jsonQuery('[*storeid=' + storeid + ']', { data: responseweb }).value;
-                let result = jsonQuery('[*userid=' + userid + ']', { data: arr }).value;
-                if (!empty(result)) {
-                    result.forEach((element) => {
-                        io.sockets.to(element.socketid).emit('chatweb', {
-                            idtype: userid,
-                            name,
-                            message
-                        });
+            let indexchat = doc.products[indexproduct].chat.findIndex((dat) => { return dat._id == chatid; });
+            doc.products[indexproduct].chat[indexchat].messages.push({
+                idtype: userid,
+                name,
+                message
+            });
+            let arr = jsonQuery('[*storeid=' + storeid + ']', { data: responseweb }).value;
+            let result = jsonQuery('[*userid=' + userid + ']', { data: arr }).value;
+            if (!empty(result)) {
+                result.forEach((element) => {
+                    io.sockets.to(element.socketid).emit('chatweb', {
+                        userid,
+                        name,
+                        message
                     });
-                }
-                else {
-                    notification_create = true;
-                    let indexnotify = doc.notify.chats.findIndex((dat) => { return dat.chatid == chatid; });
-                    if (indexnotify == -1) {
-                        doc.notify.count++;
-                        doc.notify.chats.push({
-                            chatid,
-                            userid,
-                            name,
-                            productid,
-                            message,
-                            count: 1,
-                            date: new Date()
-                        });
-                    }
-                    else {
-                        if (doc.notify.chats[indexnotify].count == 0) {
-                            doc.notify.count++;
-                        }
-                        doc.notify.chats[indexnotify].count++;
-                        doc.notify.chats[indexnotify].date = new Date();
-                        doc.notify.chats[indexnotify].name = name;
-                        doc.notify.chats[indexnotify].message = message;
-                    }
-                }
+                });
             }
             else {
-                doc.products[indexproduct].chat.push({
-                    clientid: userid,
-                    messages: [{
-                            idtype: userid,
-                            name,
-                            message
-                        }]
-                });
-                chatid = doc.products[indexproduct].chat[doc.products[indexproduct].chat.length - 1]._id;
                 notification_create = true;
                 let indexnotify = doc.notify.chats.findIndex((dat) => { return dat.chatid == chatid; });
                 if (indexnotify == -1) {
