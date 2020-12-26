@@ -675,9 +675,9 @@ router.post('/chats', (req, res) => {
     });
 });
 router.post('/getCustomerStore', (req, res) => {
-    let id = req.body.storeid;
+    let id = req.body.userid;
     let tokenfirebase = req.body.tokenfirebase;
-    StoreSchema_1.default.findOne({ _id: id }).select('verify tokenFirebase').exec((err, doc) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+    StoreSchema_1.default.findOne({ idcustomer: id }).select('verify tokenFirebase').exec((err, doc) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         if (!empty(doc)) {
             if (doc.verify) {
                 let indextoken = doc.tokenFirebase.findIndex((dat) => { return dat == tokenfirebase; });
