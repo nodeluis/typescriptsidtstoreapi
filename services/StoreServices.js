@@ -759,13 +759,15 @@ router.post('/verifyStore',multer.single('credential'), (req, res) => {
                 StoreSchema_1.default.findByIdAndUpdate(doc._id, doc, () => {
                     res.status(200).json({
                         message: 'Se verificó la tienda',
-                        storeid: doc._id
+                        storeid: doc._id,
+                        state:true
                     });
                 });
             } catch (error) {
                 res.status(200).json({
                     message: 'Debe de enviar una imagen correcta',
-                    storeid: ''
+                    storeid: '',
+                    state:false
                 });
             }
             
