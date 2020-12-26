@@ -170,6 +170,8 @@ router.put("/updatestore", (req, res) => tslib_1.__awaiter(void 0, void 0, void 
 }));
 router.post("/product",multer.array('gallery',12),(req, res) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     var body = req.body;
+    console.log(body);
+    
     if (body == null) {
         res.status(http_status_codes_1.BAD_REQUEST).json({ errorMessage: "El campo Body  está vacio" });
         return;
