@@ -57,7 +57,7 @@ app.get('*', (req, res) => {
     res.sendFile('index.html', { root: viewsDir });
 });
 
-const http_1 = tslib_1.__importDefault(require("http"));
+/*const http_1 = tslib_1.__importDefault(require("http"));
 const socket_io_1 = tslib_1.__importDefault(require("socket.io"));
 const server = http_1.default.createServer(app);
 const io = socket_io_1.default.listen(server);
@@ -67,6 +67,6 @@ ChatService_1.default(io);
 server.listen(8000,()=>{
   console.log('listen 8000');
   
-});
+});*/
 
 exports.default = app;
