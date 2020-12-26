@@ -764,6 +764,8 @@ router.post('/verifyStore',multer.single('credential'), (req, res) => {
                     });
                 });
             } catch (error) {
+                console.log(error);
+                
                 res.status(200).json({
                     message: 'Debe de enviar una imagen correcta',
                     storeid: '',
