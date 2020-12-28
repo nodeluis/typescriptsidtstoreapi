@@ -359,7 +359,7 @@ router.put('/savedatapayment/send', (req, res) => {
             for (let index = 0; index < doc.shoppingcart.length;) {
                 const element = doc.shoppingcart[index];
                 if (element.card) {
-                    let store = yield StoreSchema_1.default.findOne({ _id: element.store }).select('products idcustomer sales');
+                    let store = yield StoreSchema_1.default.findOne({ _id: element.store }).select('products idcustomer sales notify tokenFirebase');
                     let indexproduct = store.products.findIndex((dat) => { return (dat._id + '') == (element.product + ''); });
                     let disponible = store.products[indexproduct].quantityavailable - element.total;
                     if (disponible >= 0) {
@@ -371,10 +371,7 @@ router.put('/savedatapayment/send', (req, res) => {
                             product: element.product,
                             buyer: userid
                         });
-                        yield StoreSchema_1.default.findByIdAndUpdate(store._id, store);
-                        let user = yield CustomerSchema_1.default.findOne({ _id: store.idcustomer }).select('notify tokenFirebase');
-                        user.notify.push({
-                            typenotification: 1,
+                        store.notify.buys.push({
                             storeid: element.store,
                             productid: element.product,
                             card: true,
@@ -384,10 +381,10 @@ router.put('/savedatapayment/send', (req, res) => {
                             direction: doc.sendAddress[indexaddress]._id
                         });
                         arr.push({
-                            userid: user._id,
-                            tokens: user.tokenFirebase
+                            storeid: store._id,
+                            tokens: store.tokenFirebase
                         });
-                        yield CustomerSchema_1.default.findByIdAndUpdate(user._id, user);
+                        yield StoreSchema_1.default.findByIdAndUpdate(store._id, store);
                         let pushcart = doc.shoppingcart[index];
                         doc.history.push({
                             date: new Date(),
@@ -405,10 +402,8 @@ router.put('/savedatapayment/send', (req, res) => {
                     }
                 }
                 else {
-                    let store = yield StoreSchema_1.default.findOne({ _id: element.store }).select('idcustomer sales');
-                    let user = yield CustomerSchema_1.default.findOne({ _id: store.idcustomer }).select('notify tokenFirebase');
-                    user.notify.push({
-                        typenotification: 1,
+                    let store = yield StoreSchema_1.default.findOne({ _id: element.store }).select('idcustomer sales notify tokenFirebase');
+                    store.notify.buys.push({
                         storeid: element.store,
                         productid: element.product,
                         card: false,
@@ -418,10 +413,9 @@ router.put('/savedatapayment/send', (req, res) => {
                         direction: doc.sendAddress[indexaddress]._id
                     });
                     arr.push({
-                        userid: user._id,
-                        tokens: user.tokenFirebase
+                        storeid: store._id,
+                        tokens: store.tokenFirebase
                     });
-                    yield CustomerSchema_1.default.findByIdAndUpdate(user._id, user);
                     store.sales.push({
                         date: new Date(),
                         total: element.total,
@@ -459,7 +453,7 @@ router.put('/savedatapayment/store', (req, res) => {
             for (let index = 0; index < doc.shoppingcart.length;) {
                 const element = doc.shoppingcart[index];
                 if (element.card) {
-                    let store = yield StoreSchema_1.default.findOne({ _id: element.store }).select('products idcustomer sales');
+                    let store = yield StoreSchema_1.default.findOne({ _id: element.store }).select('products idcustomer sales notify tokenFirebase');
                     let indexproduct = store.products.findIndex((dat) => { return (dat._id + '') == (element.product + ''); });
                     let disponible = store.products[indexproduct].quantityavailable - element.total;
                     if (disponible >= 0) {
@@ -471,10 +465,7 @@ router.put('/savedatapayment/store', (req, res) => {
                             product: element.product,
                             buyer: userid
                         });
-                        yield StoreSchema_1.default.findByIdAndUpdate(store._id, store);
-                        let user = yield CustomerSchema_1.default.findOne({ _id: store.idcustomer }).select('notify tokenFirebase');
-                        user.notify.push({
-                            typenotification: 1,
+                        store.notify.buys.push({
                             storeid: element.store,
                             productid: element.product,
                             card: element.card,
@@ -484,10 +475,10 @@ router.put('/savedatapayment/store', (req, res) => {
                             direction: ''
                         });
                         arr.push({
-                            userid: user._id,
-                            tokens: user.tokenFirebase
+                            storeid: store._id,
+                            tokens: store.tokenFirebase
                         });
-                        yield CustomerSchema_1.default.findByIdAndUpdate(user._id, user);
+                        yield StoreSchema_1.default.findByIdAndUpdate(store._id, store);
                         let pushcart = doc.shoppingcart[index];
                         doc.history.push({
                             date: new Date(),
@@ -505,10 +496,8 @@ router.put('/savedatapayment/store', (req, res) => {
                     }
                 }
                 else {
-                    let store = yield StoreSchema_1.default.findOne({ _id: element.store }).select('idcustomer sales');
-                    let user = yield CustomerSchema_1.default.findOne({ _id: store.idcustomer }).select('notify tokenFirebase');
-                    user.notify.push({
-                        typenotification: 1,
+                    let store = yield StoreSchema_1.default.findOne({ _id: element.store }).select('idcustomer sales notify tokenFirebase');
+                    store.notify.buys.push({
                         storeid: element.store,
                         productid: element.product,
                         card: element.card,
@@ -518,10 +507,9 @@ router.put('/savedatapayment/store', (req, res) => {
                         direction: ''
                     });
                     arr.push({
-                        userid: user._id,
-                        tokens: user.tokenFirebase
+                        storeid: store._id,
+                        tokens: store.tokenFirebase
                     });
-                    yield CustomerSchema_1.default.findByIdAndUpdate(user._id, user);
                     store.sales.push({
                         date: new Date(),
                         total: element.total,

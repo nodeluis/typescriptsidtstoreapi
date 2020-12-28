@@ -40,6 +40,7 @@ exports.default = (io) => {
             if (socketindex != -1) {
                 responseweb[socketindex].userid = '';
             }
+            console.log(responseweb);
         });
         socket.on('idapp', (data) => {
             let socketindex = responseapp.findIndex((dat) => { return dat.socketid == data.socketid; });
@@ -65,7 +66,7 @@ exports.default = (io) => {
         });
         socket.on('shopping', (data) => {
             console.log(data);
-            let result = jsonQuery('[*userid=' + data.userid + ']', { data: responseweb }).value;
+            let result = jsonQuery('[*storeid=' + data.storeid + ']', { data: responseweb }).value;
             if (!empty(result)) {
                 result.forEach((element) => {
                     io.sockets.to(element.socketid).emit('notify1', '');
