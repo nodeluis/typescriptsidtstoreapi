@@ -22,7 +22,7 @@ const Logger_1 = tslib_1.__importDefault(require("./shared/Logger"));
 //const express_fileupload_1 = tslib_1.__importDefault(require("express-fileupload"));
 const cors_1 = tslib_1.__importDefault(require("cors"));
 const app = express_1.default();
-app.use(cors_1.default({origin:'https://mercadoxpress.herokuapp.com'}));
+app.use(cors_1.default({origin:'*'}));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use(cookie_parser_1.default());
