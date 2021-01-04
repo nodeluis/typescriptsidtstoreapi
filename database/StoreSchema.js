@@ -15,6 +15,11 @@ const storeSchema = new StoreSchema({
     banner: String,
     description: String,
     idcustomer: String,
+    collaborators: [{
+            idcollaborator: Connect_1.default.Types.ObjectId,
+            name: String,
+            date: Date,
+        }],
     realpathphoto: String,
     verify: Boolean,
     tokenFirebase: [],
@@ -30,6 +35,11 @@ const storeSchema = new StoreSchema({
         {
             productname: String,
             description: String,
+            smalldescription: String,
+            ofert: {
+                avaible: Boolean,
+                quatity: Number,
+            },
             price: Number,
             date: Date,
             defaultimage: String,
@@ -39,6 +49,7 @@ const storeSchema = new StoreSchema({
             quantityavailable: Number,
             pricesend: Number,
             state: Boolean,
+            sales: [],
             category: [
                 {
                     name: String,
@@ -93,7 +104,15 @@ const storeSchema = new StoreSchema({
     },
     notify: {
         count: Number,
-        buys: [{}],
+        buys: [{
+                storeid: String,
+                productid: String,
+                card: Boolean,
+                cash: Boolean,
+                send: Boolean,
+                userid: String,
+                direction: String
+            }],
         chats: [{
                 chatid: String,
                 userid: String,

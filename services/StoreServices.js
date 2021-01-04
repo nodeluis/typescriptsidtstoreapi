@@ -180,6 +180,12 @@ router.post("/product",multer.array('gallery',12),(req, res) => tslib_1.__awaite
     body["state"] = false;
     body["price"] = Number(body["price"]);
     body["discount"] = Number(body["discount"]);
+	body["ofert"]={
+	    avaible:false,
+	    quantity:0
+	  };
+
+    body["sales"] = 0;
     var idstore = body["id_store"];
     if (idstore == null) {
         res.status(http_status_codes_1.BAD_REQUEST).json({ errorMessage: "Es necesario el atributo id_store" });

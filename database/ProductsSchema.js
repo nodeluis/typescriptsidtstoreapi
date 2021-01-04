@@ -6,6 +6,11 @@ const ProductSchema = new Connect_1.default.Schema({
     storeId: Connect_1.default.Types.ObjectId,
     productname: String,
     description: String,
+    smalldescription: String,
+    ofert: {
+        avaible: Boolean,
+        quatity: Number,
+    },
     defaultimage: String,
     pathDefaultimage: String,
     price: Number,
@@ -15,6 +20,7 @@ const ProductSchema = new Connect_1.default.Schema({
     quantityavailable: Number,
     pricesend: Number,
     state: Boolean,
+    sales: [],
     category: [
         {
             name: String,
@@ -43,7 +49,7 @@ const ProductSchema = new Connect_1.default.Schema({
                 }
             ]
         }
-    ]
+    ],
 });
 const modelStoreSchema = Connect_1.default.model("product", ProductSchema);
 exports.default = modelStoreSchema;

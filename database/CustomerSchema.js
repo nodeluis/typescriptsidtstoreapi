@@ -122,6 +122,9 @@ const customerSchema = new CustomerSchema({
             code: Number
         }
     },
+    likestore: [{
+            storeid: Connect_1.default.Types.ObjectId,
+        }]
 });
 const CustomerModel = Connect_1.default.model("customer", customerSchema);
 exports.default = CustomerModel;
