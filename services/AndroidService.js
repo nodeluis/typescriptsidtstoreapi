@@ -5,7 +5,7 @@ const express_1 = require("express");
 const http_status_codes_1 = require("http-status-codes");
 const StoreSchema_1 = tslib_1.__importDefault(require("../database/StoreSchema"));
 const ProductsSchema_1 = tslib_1.__importDefault(require("../database/ProductsSchema"));
-const CustomerSchema_1 = tslib_1.__importDefault(require("../database/CustomerSchema"));
+const CustomerSchema_1 = tslib_1.__importDefault(require("src/database/CustomerSchema"));
 const empty = require('is-empty');
 const router = express_1.Router();
 router.post('/storesAndroid', (req, res) => {
@@ -21,7 +21,7 @@ router.post('/storesAndroid', (req, res) => {
                     });
                     let objectResponse = {
                         _id: doc._id,
-                        stars: (doc.stars.length == 0 ? 0 : sumstar / doc.stars.length),
+                        stars: (doc.stars.length == 0 ? 5 : sumstar / doc.stars.length),
                         like: false,
                         storename: doc.storename,
                         sales: doc.sales.length,
@@ -50,7 +50,7 @@ router.post('/storesAndroid', (req, res) => {
                     let indexlike = user.likestore.findIndex((dat) => { return dat.storeid + '' == doc._id; });
                     let objectResponse = {
                         _id: doc._id,
-                        stars: (doc.stars.length == 0 ? 0 : sumstar / doc.stars.length),
+                        stars: (doc.stars.length == 0 ? 5 : sumstar / doc.stars.length),
                         like: (indexlike == -1 ? false : true),
                         storename: doc.storename,
                         sales: doc.sales.length,
@@ -80,7 +80,7 @@ router.post('/recomendationsStoresAndroid', (req, res) => {
                     });
                     let objectResponse = {
                         _id: doc._id,
-                        stars: (doc.stars.length == 0 ? 0 : sumstar / doc.stars.length),
+                        stars: (doc.stars.length == 0 ? 5 : sumstar / doc.stars.length),
                         like: false,
                         storename: doc.storename,
                         sales: doc.sales.length,
@@ -109,7 +109,7 @@ router.post('/recomendationsStoresAndroid', (req, res) => {
                     let indexlike = user.likestore.findIndex((dat) => { return dat.storeid + '' == doc._id; });
                     let objectResponse = {
                         _id: doc._id,
-                        stars: (doc.stars.length == 0 ? 0 : sumstar / doc.stars.length),
+                        stars: (doc.stars.length == 0 ? 5 : sumstar / doc.stars.length),
                         like: (indexlike == -1 ? false : true),
                         storename: doc.storename,
                         sales: doc.sales.length,
@@ -136,7 +136,7 @@ router.get('/productsAndroid', (req, res) => {
             docs.forEach((doc) => {
                 arr.push({
                     _id: doc._id,
-                    stars: doc.likes,
+                    stars: (doc.likes == 0 ? 5 : doc.likes),
                     ofert: doc.ofert.avaible,
                     sales: doc.sales.length,
                     productname: doc.productname,
@@ -237,7 +237,7 @@ router.get('/similaryProductsAndroid', (req, res) => {
             docs.forEach((doc) => {
                 arr.push({
                     _id: doc._id,
-                    stars: doc.likes,
+                    stars: (doc.likes == 0 ? 5 : doc.likes),
                     ofert: doc.ofert.avaible,
                     sales: doc.sales.length,
                     productname: doc.productname,
@@ -266,7 +266,7 @@ router.post('/detailsStoreAndroid', (req, res) => {
                     sumstar += element.star;
                 });
                 objectResponse = {
-                    stars: (doc.stars.length == 0 ? 0 : sumstar / doc.stars.length),
+                    stars: (doc.stars.length == 0 ? 5 : sumstar / doc.stars.length),
                     sales: doc.sales.length,
                     storename: doc.storename,
                     verify: (empty(doc.verificationstore) ? false : true),
@@ -283,7 +283,7 @@ router.post('/detailsStoreAndroid', (req, res) => {
                 let user = yield CustomerSchema_1.default.findOne({ _id: userid }).select('likestore');
                 let indexlike = user.likestore.findIndex((dat) => { return dat.storeid == storeid; });
                 objectResponse = {
-                    stars: (doc.stars.length == 0 ? 0 : sumstar / doc.stars.length),
+                    stars: (doc.stars.length == 0 ? 5 : sumstar / doc.stars.length),
                     sales: doc.sales.length,
                     storename: doc.storename,
                     verify: (empty(doc.verificationstore) ? false : true),
@@ -307,7 +307,7 @@ router.get('/storeProductsAndroid/:id', (req, res) => {
             docs.forEach((doc) => {
                 arr.push({
                     _id: doc._id,
-                    stars: doc.likes,
+                    stars: (doc.likes == 0 ? 5 : doc.likes),
                     ofert: doc.ofert.avaible,
                     sales: doc.sales.length,
                     productname: doc.productname,
@@ -331,7 +331,7 @@ router.get('/userSalesProductsAndroid', (req, res) => {
             docs.forEach((doc) => {
                 arr.push({
                     _id: doc._id,
-                    stars: doc.likes,
+                    stars: (doc.likes == 0 ? 5 : doc.likes),
                     ofert: doc.ofert.avaible,
                     sales: doc.sales.length,
                     productname: doc.productname,
