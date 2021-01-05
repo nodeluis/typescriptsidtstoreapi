@@ -207,7 +207,7 @@ router.post('/detailsProductAndroid', (req, res) => {
                     _id: doc.products[indexdetail]._id,
                     storeid: doc._id,
                     msn: (doc.idcustomer == userid ? false : stateaccount ? true : false),
-                    cart: (indexprodcart != -1 ? false : stateaccount ? true : false),
+                    cart: (indexprodcart != -1 ? false : true),
                     productname: doc.products[indexdetail].productname,
                     likes: doc.products[indexdetail].likes,
                     description: doc.products[indexdetail].description,
