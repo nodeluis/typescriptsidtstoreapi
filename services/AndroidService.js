@@ -10,7 +10,7 @@ const empty = require('is-empty');
 const router = express_1.Router();
 router.post('/storesAndroid', (req, res) => {
     let userid = req.body.userid;
-    if (userid == '') {
+    if (userid == ''&&userid!=null) {
         StoreSchema_1.default.find().select('_id stars storename sales verificationstore banner').exec((err, docs) => {
             if (!empty(docs)) {
                 let arr = [];
