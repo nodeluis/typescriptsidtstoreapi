@@ -10,7 +10,7 @@ const empty = require('is-empty');
 const router = express_1.Router();
 router.post('/storesAndroid', (req, res) => {
     let userid = req.body.userid;
-    if (userid == ''&&userid!=null) {
+    if (userid == '') {
         StoreSchema_1.default.find().select('_id stars storename sales verificationstore banner').exec((err, docs) => {
             if (!empty(docs)) {
                 let arr = [];
@@ -166,7 +166,7 @@ router.post('/detailsProductAndroid', (req, res) => {
                     _id: '',
                     storeid: '',
                     msn: false,
-                    cart: false,
+                    cart: true,
                     productname: doc.products[indexdetail].productname,
                     likes: doc.products[indexdetail].likes,
                     description: doc.products[indexdetail].description,
@@ -177,6 +177,7 @@ router.post('/detailsProductAndroid', (req, res) => {
                     gallery: doc.products[indexdetail].gallery,
                     stateAccount: {
                         stateacc: false,
+                        sesion: false,
                         message: 'Ud. no esta logeado'
                     }
                 };
@@ -217,6 +218,7 @@ router.post('/detailsProductAndroid', (req, res) => {
                     gallery: doc.products[indexdetail].gallery,
                     stateAccount: {
                         stateacc: stateaccount,
+                        sesion: true,
                         message
                     },
                     messagecart: (indexprodcart == -1 ? '' : 'Este producto ya se encuentra en tu carrito')
