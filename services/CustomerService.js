@@ -154,36 +154,53 @@ router.put("/update/user", (req, res, next) => tslib_1.__awaiter(void 0, void 0,
     }
     res.status(300).json({ errorMessage: "Error en el servidor", errors });
 }));
-router.put("/update/profileavatar", (req, res) => {
-    if (!req.files || Object.keys(req.files).length === 0) {
-        res.status(400).json({ errorMessage: 'No existen archivos para subir' });
+
+
+const {Storage}=require('@google-cloud/storage');
+const Multer=require('multer');
+const gc=new Storage({
+    keyFilename:__dirname + '/../apivisiongoogle.json',
+    projectId:'rosy-environs-268816'
+});
+
+const multer=Multer({
+    storage:Multer.memoryStorage()
+});
+
+const bucket=gc.bucket(process.env.GCLOUD_STORAGE_BUCKET||'bucket_prueba_sis719_2');
+
+router.put("/update/profileavatar",multer.single('avatarfile'), (req, res) => {
+    if (empty(req.file)) {
+        res.status(400).json({ message: 'No existen archivos para subir' });
         return;
     }
     var params = req.query;
     if (params.id == null) {
-        res.status(300).json({ errorMessage: "El identificador Es necesario" });
+        res.status(300).json({ message: "El identificador Es necesario" });
         return;
     }
-    if (req.files.avatarfile == null) {
-        res.status(400).send('El nombre del archivo debe llamarse "avatarfile"');
-        return;
-    }
-    var avatarfile = req.files.avatarfile;
+
     var date = new Date();
     var token = sha1_1.default(date.toString()).substr(0, 7);
-    var nameAvatar = token + "_" + avatarfile.name.replace(/\s/g, "_");
-    avatarfile.mv(__dirname + "/../avatarfiles/" + nameAvatar, function (err) {
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            if (err) {
-                res.status(400).json({ serverMessage: "Error no se pudo copiar la imagen al servidor" });
-                return;
-            }
-            var path = '/api/v1/customer/get/avatar/' + params.id;
-            var updateobj = { profilePhoto: path, realpathPhoto: __dirname.replace(/services/g, "") + "avatarfiles/" + nameAvatar };
-            var result = yield CustomerSchema_1.default.update({ _id: params.id }, updateobj);
-            res.status(200).json({ serverMessage: "Correcto", url: path, result });
-        });
+    const blob=bucket.file(token+'_'+req.file.originalname);
+    const blobStream=blob.createWriteStream({
+        resumable:false
     });
+
+    blobStream.on('error',(err)=>{
+        res.json({message:err});
+    });
+
+    blobStream.on('finish',async()=>{
+        var path = 'https://storage.googleapis.com/'+bucket.name+'/'+blob.name;
+        var updateobj = { profilePhoto: path, realpathPhoto:'' };
+        var result = await CustomerModel.update({ _id: params.id }, updateobj);
+
+        res.status(200).json({ message: "Avatar actualizado", url: path });
+        
+    });
+
+    blobStream.end(req.file.buffer);
 });
 router.get("/get/avatar/:id", (req, res) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     var params = req.params;
