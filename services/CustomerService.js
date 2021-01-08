@@ -194,7 +194,7 @@ router.put("/update/profileavatar",multer.single('avatarfile'), (req, res) => {
     blobStream.on('finish',async()=>{
         var path = 'https://storage.googleapis.com/'+bucket.name+'/'+blob.name;
         var updateobj = { profilePhoto: path, realpathPhoto:'' };
-        var result = await CustomerModel.update({ _id: params.id }, updateobj);
+        var result = await CustomerSchema_1.update({ _id: params.id }, updateobj);
 
         res.status(200).json({ message: "Avatar actualizado", url: path });
         
