@@ -175,7 +175,7 @@ const multer=Multer({
 
 const bucket=gc.bucket(process.env.GCLOUD_STORAGE_BUCKET||'bucket_prueba_sis719_2');
 
-router.put("/update/profileavatar",multer.single('avatarfile'), (req, res) => {
+router.put("/update/profileavatar",multer.single('avatarfile'),async(req, res) => {
     if (empty(req.file)) {
         res.status(400).json({ message: 'No existen archivos para subir' });
         return;
