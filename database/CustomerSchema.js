@@ -4,26 +4,56 @@ const tslib_1 = require("tslib");
 const Connect_1 = tslib_1.__importDefault(require("./Connect"));
 const CustomerSchema = Connect_1.default.Schema;
 const customerSchema = new CustomerSchema({
-    firstname: String,
-    lastname: String,
-    password: String,
-    email: {
-        type: String,
-        unique: true,
-        validate: {
-            validator: (value) => {
-                return /^[\w\.]+@[\w\.]+\.\w{3,3}$/.test(value);
-                ;
-            },
-            message: props => `${props.value}, no es un email válido`
-        }
+    xpressdata: {
+        avaible: Boolean,
+        firstname: String,
+        lastname: String,
+        password: String,
+        email: {
+            type: String,
+            validate: {
+                validator: (value) => {
+                    return /^[\w\.]+@[\w\.]+\.\w{3,3}$/.test(value);
+                    ;
+                },
+                message: (props) => `${props.value}, no es un email válido`
+            }
+        },
+        profilePhoto: String,
+        realpathPhoto: String,
+        phone: String,
+        country: String,
+        state: String,
     },
-    phone: String,
-    country: String,
-    state: String,
+    facebookdata: {
+        avaible: Boolean,
+        firstname: String,
+        lastname: String,
+        password: String,
+        email: String,
+        picture: String,
+        facebookid: String,
+        profilePhoto: String,
+        realpathPhoto: String,
+        phone: String,
+        country: String,
+        state: String,
+    },
+    googledata: {
+        avaible: Boolean,
+        firstname: String,
+        lastname: String,
+        password: String,
+        email: String,
+        picture: String,
+        googleid: String,
+        profilePhoto: String,
+        realpathPhoto: String,
+        phone: String,
+        country: String,
+        state: String,
+    },
     tokenFirebase: [],
-    profilePhoto: String,
-    realpathPhoto: String,
     date: Date,
     points: Number,
     seller: Boolean,

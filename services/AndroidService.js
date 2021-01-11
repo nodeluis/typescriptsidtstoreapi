@@ -33,7 +33,7 @@ router.post('/storesAndroid', (req, res) => {
                 res.status(200).json(arr);
             }
             else {
-                res.status(http_status_codes_1.BAD_REQUEST).json({ message: err });
+                res.status(200).json([]);
             }
         });
     }
@@ -62,7 +62,7 @@ router.post('/storesAndroid', (req, res) => {
                 res.status(200).json(arr);
             }
             else {
-                res.status(http_status_codes_1.BAD_REQUEST).json({ message: err });
+                res.status(200).json([]);
             }
         }));
     }
@@ -92,7 +92,7 @@ router.post('/recomendationsStoresAndroid', (req, res) => {
                 res.status(200).json(arr);
             }
             else {
-                res.status(http_status_codes_1.BAD_REQUEST).json({ message: err });
+                res.status(200).json([]);
             }
         });
     }
@@ -121,7 +121,7 @@ router.post('/recomendationsStoresAndroid', (req, res) => {
                 res.status(200).json(arr);
             }
             else {
-                res.status(http_status_codes_1.BAD_REQUEST).json({ message: err });
+                res.status(200).json([]);
             }
         }));
     }

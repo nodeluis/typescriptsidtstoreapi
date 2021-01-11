@@ -39,19 +39,20 @@ router.post("/join/singup", (req, res) => tslib_1.__awaiter(void 0, void 0, void
 router.post("/token/get", (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     var params = req.body;
     if (params.email == null) {
-        res.status(300).json({ errorMessage: "Es necesario el Email" });
+        res.status(300).json({ message: "Es necesario el Email" });
         return;
     }
     if (params.password == null) {
-        res.status(300).json({ errorMessage: "Es necesario el password" });
+        res.status(300).json({ message: "Es necesario el password" });
         return;
     }
-    var signparams = { email: params.email, password: sha1_1.default(params.password) };
+    var signparams = { 'xpressdata.email': params.email, 'xpressdata.password': sha1_1.default(params.password) };
     let userLoginCorrect = yield CustomerSchema_1.default.findOne(signparams);
+    console.log(userLoginCorrect);
     if (!empty(userLoginCorrect)) {
         const privatekey = fs_1.default.readFileSync(__dirname + "/../keyrsa/jwtRS256.key", "utf8");
         const token = jsonwebtoken_1.default.sign({ exp: Math.floor(Date.now() / 1000) + (60 * 60), email: params.email }, privatekey, { algorithm: "RS256" });
-        res.status(200).json({ serverMessage: "Credenciales correctas", userdata: userLoginCorrect, token: token });
+        res.status(200).json({ message: "Credenciales correctas", _id: userLoginCorrect._id, token, name: userLoginCorrect.xpressdata.firstname, url: userLoginCorrect.xpressdata.profilePhoto });
         let tokenfirebase = params.tokenfirebase;
         let indextoken = userLoginCorrect.tokenFirebase.findIndex((token) => { return token == tokenfirebase; });
         if (indextoken == -1) {
@@ -60,27 +61,32 @@ router.post("/token/get", (req, res, next) => tslib_1.__awaiter(void 0, void 0, 
         }
         return;
     }
-    res.status(200).json({ errorMessage: "Credenciales erroneas" });
+    else {
+        res.status(http_status_codes_1.BAD_REQUEST).json({ message: "Credenciales erroneas" });
+    }
 }));
 router.post("/tokenstore/get", (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     var params = req.body;
     if (params.email == null) {
-        res.status(300).json({ errorMessage: "Es necesario el Email" });
+        res.status(200).json({ message: "Es necesario el Email", st: false });
         return;
     }
     if (params.password == null) {
-        res.status(300).json({ errorMessage: "Es necesario el password" });
+        res.status(200).json({ message: "Es necesario el password", st: false });
         return;
     }
-    var signparams = { email: params.email, password: sha1_1.default(params.password) };
+    var signparams = { 'xpressdata.email': params.email, 'xpressdata.password': sha1_1.default(params.password) };
     let userLoginCorrect = yield CustomerSchema_1.default.findOne(signparams);
     if (!empty(userLoginCorrect)) {
         const privatekey = fs_1.default.readFileSync(__dirname + "/../keyrsa/jwtRS256.key", "utf8");
         const token = jsonwebtoken_1.default.sign({ exp: Math.floor(Date.now() / 1000) + (60 * 60), email: params.email }, privatekey, { algorithm: "RS256" });
-        res.status(200).json({ serverMessage: "Credenciales correctas", userdata: userLoginCorrect, token: token });
+        res.status(200).json({ message: "Credenciales correctas", _id: userLoginCorrect._id, token, name: userLoginCorrect.xpressdata.firstname, url: userLoginCorrect.xpressdata.profilePhoto, st: true });
         return;
     }
-    res.status(200).json({ errorMessage: "Credenciales erroneas" });
+    else {
+        res.status(200).json({ message: "Credenciales erroneas", st: false });
+        return;
+    }
 }));
 router.put("/logout/tokenfirebase", (req, res) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     let userid = req.body.userid;
@@ -193,7 +199,7 @@ router.put("/update/profileavatar",multer.single('avatarfile'), (req, res) => {
 
     blobStream.on('finish',async()=>{
         var path = 'https://storage.googleapis.com/'+bucket.name+'/'+blob.name;
-        var updateobj = { profilePhoto: path, realpathPhoto:'' };
+        var updateobj = {xpressdata:{ profilePhoto: path, realpathPhoto:'' }};
         var result = await CustomerSchema_1.default.update({ _id: params.id }, updateobj);
 
         res.status(200).json({ message: "Avatar actualizado", url: path });
@@ -450,4 +456,296 @@ router.put('/newPass', (req, res) => {
         }
     });
 });
+router.post("/registerLoginXpress", (req, res) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+    let email = req.body.email;
+    let firstname = req.body.firstname;
+    let lastname = req.body.lastname;
+    let password = sha1_1.default(req.body.password);
+    let phone = req.body.phone;
+    let country = req.body.country;
+    let state = req.body.state;
+    const softCustomeremail = yield CustomerSchema_1.default.findOne({ 'xpressdata.email': email });
+    if (!empty(softCustomeremail)) {
+        res.status(300).json({
+            message: "El Email ya esta registrado"
+        });
+        return;
+    }
+    const privatekey = fs_1.default.readFileSync(__dirname + "/../keyrsa/jwtRS256.key", "utf8");
+    const token = jsonwebtoken_1.default.sign({ exp: Math.floor(Date.now() / 1000) + (60 * 60), email: email }, privatekey, { algorithm: "RS256" });
+    const softCustomer = new CustomerSchema_1.default({
+        xpressdata: {
+            avaible: true,
+            firstname,
+            lastname,
+            password,
+            email,
+            profilePhoto: '',
+            realpathPhoto: '',
+            phone,
+            country,
+            state,
+        },
+        facebookdata: { avaible: false },
+        googledata: { avaible: false },
+        seller: false,
+        points: 0,
+        history: []
+    });
+    softCustomer.save((err, docs) => {
+        if (err) {
+            res.status(300).json({ message: "Existe un problema con la base de datos", err });
+            return;
+        }
+        res.status(200).json({ message: "Usuario Guardado satisfactoriamente", _id: softCustomer._id, token, name: firstname, url: '' });
+        return;
+    });
+}));
+router.post("/registerLoginXpressAndroid", (req, res) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+    let email = req.body.email;
+    let firstname = req.body.firstname;
+    let lastname = req.body.lastname;
+    let password = sha1_1.default(req.body.password);
+    let phone = req.body.phone;
+    let country = req.body.country;
+    let state = req.body.state;
+    let tokenfirebase = req.body.tokenfirebase;
+    const softCustomeremail = yield CustomerSchema_1.default.findOne({ 'xpressdata.email': email });
+    if (!empty(softCustomeremail)) {
+        res.status(300).json({
+            message: "El Email ya esta registrado"
+        });
+        return;
+    }
+    const privatekey = fs_1.default.readFileSync(__dirname + "/../keyrsa/jwtRS256.key", "utf8");
+    const token = jsonwebtoken_1.default.sign({ exp: Math.floor(Date.now() / 1000) + (60 * 60), email: email }, privatekey, { algorithm: "RS256" });
+    const softCustomer = new CustomerSchema_1.default({
+        xpressdata: {
+            avaible: true,
+            firstname,
+            lastname,
+            password,
+            email,
+            profilePhoto: '',
+            realpathPhoto: '',
+            phone,
+            country,
+            state,
+        },
+        facebookdata: { avaible: false },
+        googledata: { avaible: false },
+        seller: false,
+        points: 0,
+        tokenFirebase: [tokenfirebase],
+        history: []
+    });
+    softCustomer.save((err, docs) => {
+        if (err) {
+            res.status(300).json({ message: "Existe un problema con la base de datos", err });
+            return;
+        }
+        res.status(200).json({ message: "Usuario Guardado satisfactoriamente", _id: softCustomer._id, token, name: firstname, url: '' });
+        return;
+    });
+}));
+router.post("/registerLoginGoogleAndroid", (req, res) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+    let email = req.body.email;
+    let firstname = req.body.firstname;
+    let lastname = req.body.lastname;
+    let password = sha1_1.default(req.body.password);
+    let picture = req.body.picture;
+    let googleid = req.body.googleid;
+    let tokenfirebase = req.body.tokenfirebase;
+    const softCustomeremail = yield CustomerSchema_1.default.findOne({ 'googledata.email': email });
+    const privatekey = fs_1.default.readFileSync(__dirname + "/../keyrsa/jwtRS256.key", "utf8");
+    const token = jsonwebtoken_1.default.sign({ exp: Math.floor(Date.now() / 1000) + (60 * 60), email: email }, privatekey, { algorithm: "RS256" });
+    if (!empty(softCustomeremail)) {
+        softCustomeremail.googledata.picture = picture;
+        softCustomeremail.tokenFirebase.push(tokenfirebase);
+        CustomerSchema_1.default.findByIdAndUpdate(softCustomeremail._id, softCustomeremail, () => {
+            res.status(200).json({ message: "Bienvenido", _id: softCustomeremail._id, token, name: firstname, url: picture });
+            return;
+        });
+    }
+    else {
+        const softCustomer = new CustomerSchema_1.default({
+            xpressdata: { avaible: false },
+            facebookdata: { avaible: false },
+            googledata: {
+                avaible: true,
+                firstname,
+                lastname,
+                password,
+                email,
+                picture,
+                googleid,
+                profilePhoto: '',
+                realpathPhoto: '',
+                phone: '',
+                country: '',
+                state: ''
+            },
+            tokenFirebase: [tokenfirebase],
+            seller: false,
+            points: 0,
+            history: []
+        });
+        softCustomer.save((err, docs) => {
+            if (err) {
+                console.log(err);
+                res.status(300).json({ message: "Existe un problema con la base de datos", err });
+                return;
+            }
+            res.status(200).json({ message: "Usuario Guardado satisfactoriamente", _id: softCustomer._id, token, name: firstname, url: picture });
+            return;
+        });
+    }
+}));
+router.post("/registerLoginGoogle", (req, res) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+    let email = req.body.email;
+    let firstname = req.body.firstname;
+    let lastname = req.body.lastname;
+    let password = sha1_1.default(req.body.password);
+    let picture = req.body.picture;
+    let googleid = req.body.googleid;
+    const softCustomeremail = yield CustomerSchema_1.default.findOne({ 'googledata.email': email });
+    const privatekey = fs_1.default.readFileSync(__dirname + "/../keyrsa/jwtRS256.key", "utf8");
+    const token = jsonwebtoken_1.default.sign({ exp: Math.floor(Date.now() / 1000) + (60 * 60), email: email }, privatekey, { algorithm: "RS256" });
+    if (!empty(softCustomeremail)) {
+        res.status(200).json({ message: "Usuario Guardado satisfactoriamente", _id: softCustomeremail._id, token, name: firstname, url: picture });
+        return;
+    }
+    else {
+        const softCustomer = new CustomerSchema_1.default({
+            xpressdata: { avaible: false },
+            facebookdata: { avaible: false },
+            googledata: {
+                avaible: true,
+                firstname,
+                lastname,
+                password,
+                email,
+                picture,
+                googleid,
+                profilePhoto: '',
+                realpathPhoto: '',
+                phone: '',
+                country: '',
+                state: ''
+            },
+            seller: false,
+            points: 0,
+            history: []
+        });
+        softCustomer.save((err, docs) => {
+            if (err) {
+                res.status(300).json({ message: "Existe un problema con la base de datos", err });
+                return;
+            }
+            res.status(200).json({ message: "Usuario Guardado satisfactoriamente", _id: softCustomer._id, token, name: firstname, url: picture });
+            return;
+        });
+    }
+}));
+router.post("/registerLoginFacebookAndroid", (req, res) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+    let email = req.body.email;
+    let firstname = req.body.firstname;
+    let lastname = req.body.lastname;
+    let password = sha1_1.default(req.body.password);
+    let picture = req.body.picture;
+    let facebookid = req.body.facebookid;
+    let tokenfirebase = req.body.tokenfirebase;
+    const softCustomerid = yield CustomerSchema_1.default.findOne({ 'facebookdata.facebookid': facebookid });
+    const privatekey = fs_1.default.readFileSync(__dirname + "/../keyrsa/jwtRS256.key", "utf8");
+    const token = jsonwebtoken_1.default.sign({ exp: Math.floor(Date.now() / 1000) + (60 * 60), email: facebookid }, privatekey, { algorithm: "RS256" });
+    if (!empty(softCustomerid)) {
+        softCustomerid.facebookdata.picture = picture;
+        softCustomerid.tokenFirebase.push(tokenfirebase);
+        CustomerSchema_1.default.findByIdAndUpdate(softCustomerid._id, softCustomerid, () => {
+            res.status(200).json({ message: "Bienvenido", _id: softCustomerid._id, token, name: firstname, url: picture });
+            return;
+        });
+    }
+    else {
+        const softCustomer = new CustomerSchema_1.default({
+            xpressdata: { avaible: false },
+            facebookdata: {
+                avaible: true,
+                firstname,
+                lastname,
+                password,
+                email,
+                picture,
+                facebookid,
+                profilePhoto: '',
+                realpathPhoto: '',
+                phone: '',
+                country: '',
+                state: ''
+            },
+            googledata: { avaible: false },
+            seller: false,
+            points: 0,
+            tokenFirebase: [tokenfirebase],
+            history: []
+        });
+        softCustomer.save((err, docs) => {
+            if (err) {
+                res.status(300).json({ message: "Existe un problema con la base de datos", err });
+                return;
+            }
+            res.status(200).json({ message: "Bienvenido", _id: softCustomer._id, token, name: firstname, url: picture });
+            return;
+        });
+    }
+}));
+router.post("/registerLoginFacebook", (req, res) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+    let email = req.body.email;
+    let firstname = req.body.firstname;
+    let lastname = req.body.lastname;
+    let password = sha1_1.default(req.body.password);
+    let picture = req.body.picture;
+    let facebookid = req.body.facebookid;
+    const softCustomerid = yield CustomerSchema_1.default.findOne({ 'facebookdata.facebookid': facebookid });
+    const privatekey = fs_1.default.readFileSync(__dirname + "/../keyrsa/jwtRS256.key", "utf8");
+    const token = jsonwebtoken_1.default.sign({ exp: Math.floor(Date.now() / 1000) + (60 * 60), email: facebookid }, privatekey, { algorithm: "RS256" });
+    if (!empty(softCustomerid)) {
+        softCustomerid.facebookdata.picture = picture;
+        CustomerSchema_1.default.findByIdAndUpdate(softCustomerid._id, softCustomerid, () => {
+            res.status(200).json({ message: "Bienvenido", _id: softCustomerid._id, token, name: firstname, url: picture });
+            return;
+        });
+    }
+    else {
+        const softCustomer = new CustomerSchema_1.default({
+            xpressdata: { avaible: false },
+            facebookdata: {
+                avaible: true,
+                firstname,
+                lastname,
+                password,
+                email,
+                picture,
+                facebookid,
+                profilePhoto: '',
+                realpathPhoto: '',
+                phone: '',
+                country: '',
+                state: ''
+            },
+            googledata: { avaible: false },
+            seller: false,
+            points: 0,
+            history: []
+        });
+        softCustomer.save((err, docs) => {
+            if (err) {
+                res.status(300).json({ message: "Existe un problema con la base de datos", err });
+                return;
+            }
+            res.status(200).json({ message: "Bienvenido", _id: softCustomer._id, token, name: firstname, url: picture });
+            return;
+        });
+    }
+}));
 exports.default = router;
