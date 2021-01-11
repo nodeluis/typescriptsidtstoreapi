@@ -375,19 +375,42 @@ router.post('/postFollowStore', (req, res) => {
 });
 router.get('/userProfileAndroid/:id', (req, res) => {
     let userid = req.params.id;
-    CustomerSchema_1.default.findOne({ _id: userid }).select('firstname lastname email profilePhoto likestore history shoppingcart').exec((err, doc) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+    CustomerSchema_1.default.findOne({ _id: userid }).select('xpressdata googledata facebookdata likestore history shoppingcart').exec((err, doc) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         if (empty(doc)) {
             res.status(http_status_codes_1.BAD_REQUEST).json({ message: err });
         }
         else {
-            let objectResponse = {
-                name: doc.firstname + ' ' + doc.lastname,
-                email: doc.email,
-                profilephoto: doc.profilePhoto,
-                likestore: doc.likestore.length,
-                history: doc.history.length,
-                shoppingcart: doc.shoppingcart.length
-            };
+            let objectResponse;
+            if (doc.xpressdata.avaible) {
+                objectResponse = {
+                    name: doc.xpressdata.firstname + ' ' + doc.xpressdata.lastname,
+                    email: doc.xpressdata.email,
+                    profilephoto: doc.xpressdata.profilePhoto,
+                    likestore: doc.likestore.length,
+                    history: doc.history.length,
+                    shoppingcart: doc.shoppingcart.length
+                };
+            }
+            else if (doc.googledata.avaible) {
+                objectResponse = {
+                    name: doc.googledata.firstname,
+                    email: doc.googledata.email,
+                    profilephoto: doc.googledata.picture,
+                    likestore: doc.likestore.length,
+                    history: doc.history.length,
+                    shoppingcart: doc.shoppingcart.length
+                };
+            }
+            else if (doc.facebookdata.avaible) {
+                objectResponse = {
+                    name: doc.facebookdata.firstname,
+                    email: '',
+                    profilephoto: doc.facebookdata.picture,
+                    likestore: doc.likestore.length,
+                    history: doc.history.length,
+                    shoppingcart: doc.shoppingcart.length
+                };
+            }
             res.status(200).json(objectResponse);
         }
     }));
