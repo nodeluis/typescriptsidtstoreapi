@@ -375,11 +375,29 @@ router.post('/postFollowStore', (req, res) => {
 });
 router.get('/userProfileAndroid/:id', (req, res) => {
     let userid = req.params.id;
-    CustomerSchema_1.default.findOne({ _id: userid }).select('xpressdata googledata facebookdata likestore history shoppingcart').exec((err, doc) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+    CustomerSchema_1.default.findOne({ _id: userid }).select('xpressdata googledata facebookdata likestore history shoppingcart verificationUser').exec((err, doc) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         if (empty(doc)) {
             res.status(http_status_codes_1.BAD_REQUEST).json({ message: err });
         }
         else {
+            let message = '';
+            let stateaccount = false;
+            if (!empty(doc.verificationUser)) {
+                if (doc.verificationUser.dataIdentificationCard.avaible && doc.verificationUser.dataProfile.avaible) {
+                    if (doc.verificationUser.fingerPrint.avaible || doc.verificationUser.codeDigit.avaible) {
+                        stateaccount = true;
+                    }
+                    else {
+                        message = 'Complete la verificación de su usuario por favor';
+                    }
+                }
+                else {
+                    message = 'Para realizar compras debes de verificar tu usuario';
+                }
+            }
+            else {
+                message = 'Para realizar compras debes de verificar tu usuario';
+            }
             let objectResponse;
             if (doc.xpressdata.avaible) {
                 objectResponse = {
@@ -388,7 +406,9 @@ router.get('/userProfileAndroid/:id', (req, res) => {
                     profilephoto: doc.xpressdata.profilePhoto,
                     likestore: doc.likestore.length,
                     history: doc.history.length,
-                    shoppingcart: doc.shoppingcart.length
+                    shoppingcart: doc.shoppingcart.length,
+                    stateaccount,
+                    message
                 };
             }
             else if (doc.googledata.avaible) {
@@ -398,7 +418,9 @@ router.get('/userProfileAndroid/:id', (req, res) => {
                     profilephoto: doc.googledata.picture,
                     likestore: doc.likestore.length,
                     history: doc.history.length,
-                    shoppingcart: doc.shoppingcart.length
+                    shoppingcart: doc.shoppingcart.length,
+                    stateaccount,
+                    message
                 };
             }
             else if (doc.facebookdata.avaible) {
@@ -408,7 +430,9 @@ router.get('/userProfileAndroid/:id', (req, res) => {
                     profilephoto: doc.facebookdata.picture,
                     likestore: doc.likestore.length,
                     history: doc.history.length,
-                    shoppingcart: doc.shoppingcart.length
+                    shoppingcart: doc.shoppingcart.length,
+                    stateaccount,
+                    message
                 };
             }
             res.status(200).json(objectResponse);
