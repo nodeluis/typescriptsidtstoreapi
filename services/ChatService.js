@@ -34,6 +34,8 @@ exports.default = (io) => {
             if (socketindex != -1) {
                 responseweb[socketindex].userid = data.userid;
             }
+            console.log('web sock');
+            console.log(responseweb);
         });
         socket.on('leaveweb', (data) => {
             let socketindex = responseweb.findIndex((dat) => { return dat.socketid == data.socketid; });
@@ -57,6 +59,8 @@ exports.default = (io) => {
             if (indexuser != -1) {
                 responseapp[indexuser].productid = data.productid;
             }
+            console.log('app sock');
+            console.log(responseapp);
         });
         socket.on('leaveapp', (data) => {
             let indexuser = responseapp.findIndex((dat) => { return dat.userid == data.userid; });
