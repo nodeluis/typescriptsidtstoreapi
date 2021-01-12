@@ -400,7 +400,7 @@ router.get('/nodemailertest', (req, res) => {
 });
 router.put('/passForgotEmail', (req, res) => {
     let email = req.body.email;
-    CustomerSchema_1.default.findOne({ email: email }).select('codePassForgot').exec((err, doc) => {
+    CustomerSchema_1.default.findOne({ 'xpressdata.email': email }).select('codePassForgot').exec((err, doc) => {
         if (!empty(doc)) {
             const transporter = nodemailer_1.default.createTransport({
                 host: 'ca9.toservers.com',
@@ -439,7 +439,7 @@ router.put('/passForgotEmail', (req, res) => {
 router.post('/passForgotCode', (req, res) => {
     let email = req.body.email;
     let code = parseInt(req.body.code);
-    CustomerSchema_1.default.findOne({ email: email }).select('codePassForgot').exec((err, doc) => {
+    CustomerSchema_1.default.findOne({ 'xpressdata.email': email }).select('codePassForgot').exec((err, doc) => {
         if (!empty(doc)) {
             if (code == doc.codePassForgot) {
                 res.status(200).json({ redir: true, message: 'Ya puede editar' });
@@ -456,9 +456,9 @@ router.post('/passForgotCode', (req, res) => {
 router.put('/newPass', (req, res) => {
     let email = req.body.email;
     let pass = req.body.pass;
-    CustomerSchema_1.default.findOne({ email: email }).select('password').exec((err, doc) => {
+    CustomerSchema_1.default.findOne({ 'xpressdata.email': email }).select('xpressdata').exec((err, doc) => {
         if (!empty(doc)) {
-            doc.password = sha1_1.default(pass);
+            doc.xpressdata.password = sha1_1.default(pass);
             CustomerSchema_1.default.findByIdAndUpdate(doc._id, doc, () => {
                 res.status(200).json({ redir: true, message: '!!Se ha cambiado su contraseña!!' });
             });
@@ -502,6 +502,8 @@ router.post("/registerLoginXpress", (req, res) => tslib_1.__awaiter(void 0, void
         googledata: { avaible: false },
         seller: false,
         points: 0,
+        codePassForgot: -1,
+        date: new Date(),
         history: []
     });
     softCustomer.save((err, docs) => {
@@ -549,6 +551,8 @@ router.post("/registerLoginXpressAndroid", (req, res) => tslib_1.__awaiter(void 
         seller: false,
         points: 0,
         tokenFirebase: [tokenfirebase],
+        codePassForgot: -1,
+        date: new Date(),
         history: []
     });
     softCustomer.save((err, docs) => {
@@ -600,6 +604,7 @@ router.post("/registerLoginGoogleAndroid", (req, res) => tslib_1.__awaiter(void 
             tokenFirebase: [tokenfirebase],
             seller: false,
             points: 0,
+            date: new Date(),
             history: []
         });
         softCustomer.save((err, docs) => {
@@ -647,6 +652,7 @@ router.post("/registerLoginGoogle", (req, res) => tslib_1.__awaiter(void 0, void
             },
             seller: false,
             points: 0,
+            date: new Date(),
             history: []
         });
         softCustomer.save((err, docs) => {
@@ -699,6 +705,7 @@ router.post("/registerLoginFacebookAndroid", (req, res) => tslib_1.__awaiter(voi
             seller: false,
             points: 0,
             tokenFirebase: [tokenfirebase],
+            date: new Date(),
             history: []
         });
         softCustomer.save((err, docs) => {
@@ -748,6 +755,7 @@ router.post("/registerLoginFacebook", (req, res) => tslib_1.__awaiter(void 0, vo
             googledata: { avaible: false },
             seller: false,
             points: 0,
+            date: new Date(),
             history: []
         });
         softCustomer.save((err, docs) => {
