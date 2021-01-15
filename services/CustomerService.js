@@ -768,4 +768,83 @@ router.post("/registerLoginFacebook", (req, res) => tslib_1.__awaiter(void 0, vo
         });
     }
 }));
+router.get('/profileDataEdit/:id', (req, res) => {
+    let userid = req.params.id;
+    CustomerSchema_1.default.findOne({ _id: userid }).select('googledata facebookdata xpressdata').exec((err, doc) => {
+        if (empty(doc)) {
+            res.status(http_status_codes_1.BAD_REQUEST).json({ message: err });
+        }
+        else {
+            let objectResponse;
+            if (doc.googledata.avaible) {
+                objectResponse = {
+                    nameinput: false,
+                    lastnameinput: false,
+                    emailinput: false,
+                    phoneinput: true,
+                    phone: doc.googledata.phone,
+                    pass: false,
+                };
+            }
+            else if (doc.facebookdata.avaible) {
+                objectResponse = {
+                    nameinput: false,
+                    lastnameinput: false,
+                    emailinput: true,
+                    email: (empty(doc.facebookdata.email) ? '' : doc.facebookdata.email),
+                    phoneinput: true,
+                    phone: doc.facebookdata.phone,
+                    pass: false,
+                };
+            }
+            else if (doc.xpressdata.avaible) {
+                objectResponse = {
+                    nameinput: true,
+                    firstname: doc.xpressdata.firstname,
+                    lastnameinput: true,
+                    lastname: doc.xpressdata.lastname,
+                    emailinput: true,
+                    email: doc.xpressdata.email,
+                    phoneinput: true,
+                    phone: doc.xpressdata.phone,
+                    pass: true,
+                };
+            }
+            res.status(200).json(objectResponse);
+        }
+    });
+});
+router.post('/profileDataEdit', (req, res) => {
+    let userid = req.body.userid;
+    CustomerSchema_1.default.findOne({ _id: userid }).select('googledata facebookdata xpressdata').exec((err, doc) => {
+        if (empty(doc)) {
+            res.status(http_status_codes_1.BAD_REQUEST).json({ message: err });
+        }
+        else {
+            if (doc.googledata.avaible) {
+                doc.googledata.phone = req.body.phone;
+            }
+            else if (doc.facebookdata.avaible) {
+                doc.facebookdata.email = req.body.email;
+                doc.facebookdata.phone = req.body.phone;
+            }
+            else if (doc.xpressdata.avaible) {
+                if (doc.xpressdata.password == sha1_1.default(req.body.password)) {
+                    doc.xpressdata.firstname = req.body.firstname;
+                    doc.xpressdata.lastname = req.body.lastname;
+                    doc.xpressdata.email = req.body.email;
+                    doc.xpressdata.phone = req.body.phone;
+                    doc.xpressdata.password = req.body.password2;
+                }
+                else {
+                    res.status(http_status_codes_1.BAD_REQUEST).json({ message: 'Su contraseña no es correcta' });
+                    return;
+                }
+            }
+            CustomerSchema_1.default.findByIdAndUpdate(doc._id, doc, () => {
+                res.status(200).json({ message: 'Se actualizaron los datos' });
+            });
+        }
+    });
+});
 exports.default = router;
