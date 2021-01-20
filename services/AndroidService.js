@@ -224,7 +224,6 @@ router.post('/detailsProductAndroid', (req, res) => {
                     messagecart: (indexprodcart == -1 ? '' : 'Este producto ya se encuentra en tu carrito')
                 };
             }
-            console.log(objectResponse);
             res.status(http_status_codes_1.OK).json(objectResponse);
         }
     }));
