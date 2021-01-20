@@ -122,7 +122,7 @@ router.post('/identificationselfie',multer.single('img'), (req, res) => {
 
             const blob=bucket.file(token+'_'+req.file.originalname);
             const blobStream=blob.createWriteStream({
-                resumable:false
+                resumable:true
             });
 
             blobStream.on('error',(err)=>{
