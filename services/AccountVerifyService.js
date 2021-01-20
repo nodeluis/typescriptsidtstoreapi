@@ -67,7 +67,7 @@ router.post('/identificationcard',multer.single('img'), (req, res) => {
             let date = new Date();
             let token = sha1_1.default(date.toString()).substr(0, 7);
 
-            const blob=bucket.file(token+'_'+req.file.originalname);
+            const blob=bucket.file(req.file.originalname);
             const blobStream=blob.createWriteStream({
                 resumable:true
             });
