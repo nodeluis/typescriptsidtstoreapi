@@ -57,6 +57,15 @@ const multer=Multer({
 
 const bucket=gc.bucket(process.env.GCLOUD_STORAGE_BUCKET||'bucket_prueba_sis719_2');
 
+router.post('/fileoneplus',multer.single('img'), (req, res) => {
+    try {
+        console.log(req.file);
+        res.status(200).json({message:'se envio'});
+    } catch (error) {
+        res.status(200).json({message:'error en el file'});
+    }
+});
+
 router.post('/identificationcard',multer.single('img'), (req, res) => {
     //let files = req.files;
     let userid = req.body.userid;    
