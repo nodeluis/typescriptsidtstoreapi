@@ -18,6 +18,7 @@ const NotificationService_1 = tslib_1.__importDefault(require("./services/Notifi
 const ShoppingCartService_1 = tslib_1.__importDefault(require("./services/ShoppingCartService"));
 const AccountVerifyService_1 = tslib_1.__importDefault(require("./services/AccountVerifyService"));
 const AndroidService_1 = tslib_1.__importDefault(require("./services/AndroidService"));
+const AuxService_1 = tslib_1.__importDefault(require("./services/AuxService"));
 const Logger_1 = tslib_1.__importDefault(require("./shared/Logger"));
 //const express_fileupload_1 = tslib_1.__importDefault(require("express-fileupload"));
 const cors_1 = tslib_1.__importDefault(require("cors"));
@@ -45,6 +46,7 @@ app.use('/api/v1/notify', NotificationService_1.default);
 app.use('/api/v1/cart', ShoppingCartService_1.default);
 app.use('/api/v1/account', AccountVerifyService_1.default);
 app.use('/api/v1/android', AndroidService_1.default);
+app.use('/api/v1/helper', AuxService_1.default);
 app.use((err, req, res, next) => {
     Logger_1.default.error(err.message, err);
     return res.status(http_status_codes_1.BAD_REQUEST).json({

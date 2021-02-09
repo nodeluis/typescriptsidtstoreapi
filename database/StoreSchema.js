@@ -15,14 +15,15 @@ const storeSchema = new StoreSchema({
     banner: String,
     description: String,
     idcustomer: String,
-    collaborators: [{
-            idcollaborator: Connect_1.default.Types.ObjectId,
-            name: String,
-            date: Date,
-        }],
     realpathphoto: String,
     verify: Boolean,
     tokenFirebase: [],
+    auxs: [{
+        userid: Connect_1.default.Types.ObjectId,
+        name: String,
+        date: String,
+        photo: String,
+    }],
     stars: [
         {
             iduser: Connect_1.default.Types.ObjectId,

@@ -57,6 +57,14 @@ const customerSchema = new CustomerSchema({
     date: Date,
     points: Number,
     seller: Boolean,
+    auxStore: {
+        stateaux: Boolean,
+        storeIndicator: String,
+        stores: [{
+                name: String,
+                storeid: Connect_1.default.Types.ObjectId,
+            }]
+    },
     codePassForgot: Number,
     roles: [
         {

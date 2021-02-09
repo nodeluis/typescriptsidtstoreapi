@@ -75,7 +75,12 @@ router.post("/createstore",multer.single('banner'), (req, res) => tslib_1.__awai
     };
     var store = new StoreSchema_1.default(body);
     var result = yield store.save();
-    res.status(http_status_codes_1.CREATED).json({ serverMessage: "Datos almacenados con éxito", result: result });
+    res.status(http_status_codes_1.CREATED).json({
+        serverMessage: "Datos almacenados con éxito",
+        result: result,
+        storestate: true,
+        admin: true,
+    });
 }));
 router.get("/getstore", (req, res) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     var params = req.query;
@@ -685,81 +690,133 @@ router.post('/chats', (req, res) => {
 router.post('/getCustomerStore', (req, res) => {
     let id = req.body.userid;
     let tokenfirebase = req.body.tokenfirebase;
-    StoreSchema_1.default.findOne({ idcustomer: id }).select('verify tokenFirebase').exec((err, doc) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+    CustomerSchema_1.default.findOne({ _id: id }).select('auxStore').exec((err, doc) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         if (!empty(doc)) {
-            if (doc.verify) {
-                let indextoken = doc.tokenFirebase.findIndex((dat) => { return dat == tokenfirebase; });
-                if (indextoken == -1) {
-                    doc.tokenFirebase.push(tokenfirebase);
-                    yield StoreSchema_1.default.findByIdAndUpdate(doc._id, doc);
+            if (doc.auxStore.stateaux) {
+                let peekstoreid = doc.auxStore.storeIndicator;
+                let store = yield StoreSchema_1.default.findOne({ _id: peekstoreid }).select('verify tokenFirebase');
+                if (!empty(store)) {
+                    if (store.verify) {
+                        let indextoken = store.tokenFirebase.findIndex((dat) => { return dat == tokenfirebase; });
+                        if (indextoken == -1) {
+                            store.tokenFirebase.push(tokenfirebase);
+                            yield StoreSchema_1.default.findByIdAndUpdate(store._id, store);
+                        }
+                        res.status(200).json({
+                            st: false,
+                            message: 'La tienda esta verificada',
+                            verify: true,
+                            store: true,
+                            admin: false,
+                            storeid: store._id
+                        });
+                    }
+                    else {
+                        res.status(200).json({
+                            st: false,
+                            message: 'La tienda no esta verificada',
+                            verify: true,
+                            store: true,
+                            admin: false,
+                            storeid: store._id
+                        });
+                    }
                 }
-                res.status(200).json({
-                    message: 'La tienda esta verificada',
-                    verify: true,
-                    store: true,
-                    storeid: doc._id
-                });
+                else {
+                    res.status(200).json({
+                        st: true,
+                        message: 'El auxiliar no pertenece a la tienda',
+                        verify: true,
+                        store: true,
+                        admin: false,
+                        storeid: ''
+                    });
+                }
             }
             else {
-                res.status(200).json({
-                    message: 'La tienda no esta verificada',
-                    verify: false,
-                    store: true,
-                    storeid: ''
-                });
+                let store = yield StoreSchema_1.default.findOne({ idcustomer: id }).select('verify tokenFirebase');
+                if (!empty(store)) {
+                    if (store.verify) {
+                        let indextoken = store.tokenFirebase.findIndex((dat) => { return dat == tokenfirebase; });
+                        if (indextoken == -1) {
+                            store.tokenFirebase.push(tokenfirebase);
+                            yield StoreSchema_1.default.findByIdAndUpdate(store._id, store);
+                        }
+                        res.status(200).json({
+                            st: false,
+                            message: 'La tienda esta verificada',
+                            verify: true,
+                            store: true,
+                            admin: true,
+                            storeid: store._id
+                        });
+                    }
+                    else {
+                        res.status(200).json({
+                            st: false,
+                            message: 'La tienda no esta verificada',
+                            verify: false,
+                            store: true,
+                            admin: true,
+                            storeid: store._id
+                        });
+                    }
+                }
+                else {
+                    res.status(200).json({
+                        st: false,
+                        message: 'El usuario no tiene una tienda creada',
+                        verify: false,
+                        store: false,
+                        admin: true,
+                        storeid: ''
+                    });
+                }
             }
         }
         else {
             res.status(200).json({
-                message: 'El usuario no tiene una tienda creada',
+                st: true,
+                message: 'Error vuelva a iniciar sesión',
                 verify: false,
                 store: false,
+                admin: false,
                 storeid: ''
             });
         }
     }));
 });
-router.post('/verifyStore',multer.single('credential'), (req, res) => {
+router.post('/verifyStore', (req, res) => {
     let id = req.body.userid;
     StoreSchema_1.default.findOne({ idcustomer: id }).select('verify storename nit city direction rubro hour phone verificationstore tokenFirebase').exec((err, doc) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         if (!empty(doc)) {
             doc.verify = true;
-            doc.storename = req.body.name;
             doc.nit = req.body.nit;
             doc.city = req.body.city;
             doc.direction = req.body.direction;
             doc.rubro = req.body.rubro;
             doc.hour = req.body.hour;
             doc.phone = req.body.phone;
-            doc.tokenFirebase=[req.body.tokenfirebase];
-
+            doc.tokenFirebase.push(req.body.tokenfirebase);
+            let files = req.files;
+            let file = files.credential;
             let date = new Date();
             let token = sha1_1.default(date.toString()).substr(0, 7);
-
-            const blob=yield bucket.file(token+'_'+req.file.originalname);
-            const blobStream=yield blob.createWriteStream({
-                resumable:false
+            let namecard = token + "_" + file.name;
+            yield file.mv(__dirname + '/../bannerfiles/storeidentificationcards/' + namecard, (err) => {
+                if (err) {
+                    console.log(err);
+                    return;
+                }
             });
-
-            yield blobStream.on('error',(err)=>{
-                res.json({message:err});
-            });
-
-            yield blobStream.on('finish',async()=>{
-                console.log('se envio');
-                
-            });
-
-            yield blobStream.end(req.file.buffer);
-            let path = 'https://storage.googleapis.com/'+bucket.name+'/'+blob.name;
-
+            let path = '/api/v1/store/identification/' + namecard + '/' + doc._id;
             try {
-                const [result] = yield client.textDetection(path);
+                const [result] = yield client.textDetection(__dirname + '/../bannerfiles/storeidentificationcards/' + namecard);
                 const detections = result.textAnnotations;
                 doc.verificationstore = {
                     avaible: true,
                     datacard: {
-                        directionpath:path,
+                        directionpath: __dirname + '/../bannerfiles/storeidentificationcards/' + namecard,
                         card: path,
                         textcard: detections[0].description
                     }
@@ -768,23 +825,23 @@ router.post('/verifyStore',multer.single('credential'), (req, res) => {
                     res.status(200).json({
                         message: 'Se verificó la tienda',
                         storeid: doc._id,
-                        state:true
+                        state: true
                     });
                 });
-            } catch (error) {
-                console.log(error);
-                
+            }
+            catch (error) {
                 res.status(200).json({
-                    message: 'Debe de enviar una imagen correcta',
+                    message: 'Error en la peticion',
                     storeid: '',
-                    state:false
+                    state: false
                 });
             }
-            
         }
         else {
-            res.status(http_status_codes_1.BAD_REQUEST).json({
-                message: err,
+            res.status(200).json({
+                message: 'Ud no tiene permiso para verificar la tienda',
+                storeid: '',
+                state: false
             });
         }
     }));

@@ -77,10 +77,13 @@ router.post("/tokenstore/get", (req, res, next) => tslib_1.__awaiter(void 0, voi
     }
     var signparams = { 'xpressdata.email': params.email, 'xpressdata.password': sha1_1.default(params.password) };
     let userLoginCorrect = yield CustomerSchema_1.default.findOne(signparams);
+    const privatekey = fs_1.default.readFileSync(__dirname + "/../keyrsa/jwtRS256.key", "utf8");
+    const token = jsonwebtoken_1.default.sign({ exp: Math.floor(Date.now() / 1000) + (60 * 60), email: params.email }, privatekey, { algorithm: "RS256" });
     if (!empty(userLoginCorrect)) {
-        const privatekey = fs_1.default.readFileSync(__dirname + "/../keyrsa/jwtRS256.key", "utf8");
-        const token = jsonwebtoken_1.default.sign({ exp: Math.floor(Date.now() / 1000) + (60 * 60), email: params.email }, privatekey, { algorithm: "RS256" });
-        res.status(200).json({ message: "Credenciales correctas", _id: userLoginCorrect._id, token, name: userLoginCorrect.xpressdata.firstname, url: userLoginCorrect.xpressdata.profilePhoto, st: true });
+        userLoginCorrect.auxStore.stateaux = false;
+        CustomerSchema_1.default.findByIdAndUpdate(userLoginCorrect._id, userLoginCorrect, () => {
+            res.status(200).json({ message: "Credenciales correctas", _id: userLoginCorrect._id, token, name: userLoginCorrect.xpressdata.firstname, url: userLoginCorrect.xpressdata.profilePhoto, st: true });
+        });
         return;
     }
     else {
@@ -111,8 +114,13 @@ router.put("/logout/tokenfirebase", (req, res) => tslib_1.__awaiter(void 0, void
 router.put("/logoutstore/tokenfirebase", (req, res) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     let storeid = req.body.storeid;
     let tokenfirebase = req.body.tokenfirebase;
-    StoreSchema_1.default.findOne({ _id: storeid }).select('tokenFirebase').exec((err, doc) => {
+    let userid = req.body.userid;
+    StoreSchema_1.default.findOne({ _id: storeid }).select('tokenFirebase').exec((err, doc) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         if (!empty(doc)) {
+            let user = yield CustomerSchema_1.default.findOne({ _id: userid }).select('auxStore');
+            user.auxStore.stateaux = false;
+            user.auxStore.storeIndicator = '';
+            yield CustomerSchema_1.default.findByIdAndUpdate(user._id, user);
             let indextoken = doc.tokenFirebase.findIndex((token) => { return token == tokenfirebase; });
             if (indextoken == -1) {
                 res.status(http_status_codes_1.OK).json({ message: 'Su sesión acabó, Para recibir notificaciones de forma correcta vuelva a iniciar sesión' });
@@ -126,7 +134,7 @@ router.put("/logoutstore/tokenfirebase", (req, res) => tslib_1.__awaiter(void 0,
         else {
             res.status(http_status_codes_1.OK).json({ message: 'Su sesión acabó', err });
         }
-    });
+    }));
 }));
 router.put("/update/user", (req, res, next) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     var params = req.query;
@@ -504,7 +512,12 @@ router.post("/registerLoginXpress", (req, res) => tslib_1.__awaiter(void 0, void
         points: 0,
         codePassForgot: -1,
         date: new Date(),
-        history: []
+        history: [],
+        auxStore: {
+            stateaux: false,
+            storeIndicator: '',
+            stores: []
+        }
     });
     softCustomer.save((err, docs) => {
         if (err) {
@@ -629,8 +642,12 @@ router.post("/registerLoginGoogle", (req, res) => tslib_1.__awaiter(void 0, void
     const privatekey = fs_1.default.readFileSync(__dirname + "/../keyrsa/jwtRS256.key", "utf8");
     const token = jsonwebtoken_1.default.sign({ exp: Math.floor(Date.now() / 1000) + (60 * 60), email: email }, privatekey, { algorithm: "RS256" });
     if (!empty(softCustomeremail)) {
-        res.status(200).json({ message: "Usuario Guardado satisfactoriamente", _id: softCustomeremail._id, token, name: firstname, url: picture });
-        return;
+        softCustomeremail.googledata.picture = picture;
+        softCustomeremail.auxStore.stateaux = false;
+        CustomerSchema_1.default.findByIdAndUpdate(softCustomeremail._id, softCustomeremail, () => {
+            res.status(200).json({ message: "Bienvenido", _id: softCustomeremail._id, token, name: firstname, url: picture });
+            return;
+        });
     }
     else {
         const softCustomer = new CustomerSchema_1.default({
@@ -653,7 +670,12 @@ router.post("/registerLoginGoogle", (req, res) => tslib_1.__awaiter(void 0, void
             seller: false,
             points: 0,
             date: new Date(),
-            history: []
+            history: [],
+            auxStore: {
+                stateaux: false,
+                storeIndicator: '',
+                stores: []
+            }
         });
         softCustomer.save((err, docs) => {
             if (err) {
@@ -730,6 +752,7 @@ router.post("/registerLoginFacebook", (req, res) => tslib_1.__awaiter(void 0, vo
     const token = jsonwebtoken_1.default.sign({ exp: Math.floor(Date.now() / 1000) + (60 * 60), email: facebookid }, privatekey, { algorithm: "RS256" });
     if (!empty(softCustomerid)) {
         softCustomerid.facebookdata.picture = picture;
+        softCustomerid.auxStore.stateaux = false;
         CustomerSchema_1.default.findByIdAndUpdate(softCustomerid._id, softCustomerid, () => {
             res.status(200).json({ message: "Bienvenido", _id: softCustomerid._id, token, name: firstname, url: picture });
             return;
@@ -756,7 +779,12 @@ router.post("/registerLoginFacebook", (req, res) => tslib_1.__awaiter(void 0, vo
             seller: false,
             points: 0,
             date: new Date(),
-            history: []
+            history: [],
+            auxStore: {
+                stateaux: false,
+                storeIndicator: '',
+                stores: []
+            }
         });
         softCustomer.save((err, docs) => {
             if (err) {
@@ -843,6 +871,109 @@ router.post('/profileDataEdit', (req, res) => {
             }
             CustomerSchema_1.default.findByIdAndUpdate(doc._id, doc, () => {
                 res.status(200).json({ message: 'Se actualizaron los datos' });
+            });
+        }
+    });
+});
+router.post('/auxStores', (req, res) => {
+    try {
+        let email = req.body.email;
+        CustomerSchema_1.default.findOne({ $or: [{ 'googledata.email': email }, { 'facebookdata.facebookid': email }] }).select('auxStore').exec((err, doc) => {
+            if (empty(doc)) {
+                res.status(200).json({
+                    userid: '',
+                    stores: []
+                });
+            }
+            else {
+                res.status(200).json({
+                    userid: doc._id,
+                    stores: (empty(doc.auxStore.stores) ? [] : doc.auxStore.stores)
+                });
+            }
+        });
+    }
+    catch (error) {
+        res.status(200).json({
+            userid: '',
+            stores: []
+        });
+    }
+});
+router.post('/auxStores2', (req, res) => {
+    try {
+        let email = req.body.email;
+        let pass = sha1_1.default(req.body.password);
+        CustomerSchema_1.default.findOne({ $and: [
+                { 'xpressdata.email': email },
+                { 'xpressdata.password': pass }
+            ] }).select('auxStore').exec((err, doc) => {
+            if (empty(doc)) {
+                res.status(200).json({
+                    userid: '',
+                    stores: []
+                });
+            }
+            else {
+                res.status(200).json({
+                    userid: doc._id,
+                    stores: (empty(doc.auxStore.stores) ? [] : doc.auxStore.stores)
+                });
+            }
+        });
+    }
+    catch (error) {
+        res.status(200).json({
+            userid: '',
+            stores: []
+        });
+    }
+});
+router.post('/loginashelper', (req, res) => {
+    let userid = req.body.userid;
+    let storeid = req.body.storeid;
+    CustomerSchema_1.default.findOne({ _id: userid }).select('auxStore xpressdata googledata facebookdata').exec((err, doc) => {
+        if (empty(doc)) {
+            res.status(http_status_codes_1.BAD_REQUEST).json({
+                message: 'Error ' + err
+            });
+        }
+        else {
+            let objectresponse;
+            if (doc.xpressdata.avaible) {
+                const privatekey = fs_1.default.readFileSync(__dirname + "/../keyrsa/jwtRS256.key", "utf8");
+                const token = jsonwebtoken_1.default.sign({ exp: Math.floor(Date.now() / 1000) + (60 * 60), email: doc.xpressdata.email }, privatekey, { algorithm: "RS256" });
+                objectresponse = {
+                    _id: doc._id,
+                    name: doc.xpressdata.firstname,
+                    url: doc.xpressdata.profilePhoto,
+                    token: token,
+                };
+            }
+            else if (doc.googledata.avaible) {
+                const privatekey = fs_1.default.readFileSync(__dirname + "/../keyrsa/jwtRS256.key", "utf8");
+                const token = jsonwebtoken_1.default.sign({ exp: Math.floor(Date.now() / 1000) + (60 * 60), email: doc.googledata.email }, privatekey, { algorithm: "RS256" });
+                objectresponse = {
+                    _id: doc._id,
+                    name: doc.googledata.firstname,
+                    url: doc.googledata.profilePhoto,
+                    token: token,
+                };
+            }
+            else if (doc.facebookdata.avaible) {
+                const privatekey = fs_1.default.readFileSync(__dirname + "/../keyrsa/jwtRS256.key", "utf8");
+                const token = jsonwebtoken_1.default.sign({ exp: Math.floor(Date.now() / 1000) + (60 * 60), email: doc.facebookdata.email }, privatekey, { algorithm: "RS256" });
+                objectresponse = {
+                    _id: doc._id,
+                    name: doc.facebookdata.firstname,
+                    url: doc.facebookdata.profilePhoto,
+                    token: token,
+                };
+            }
+            doc.auxStore.stateaux = true;
+            doc.auxStore.storeIndicator = storeid;
+            CustomerSchema_1.default.findByIdAndUpdate(doc._id, doc, () => {
+                res.status(200).json(objectresponse);
             });
         }
     });

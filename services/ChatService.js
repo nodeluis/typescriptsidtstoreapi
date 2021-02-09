@@ -28,13 +28,13 @@ exports.default = (io) => {
                     socketid: data.socketid
                 });
             }
+            console.log(responseweb);
         });
         socket.on('mapstateweb', (data) => {
             let socketindex = responseweb.findIndex((dat) => { return dat.socketid == data.socketid; });
             if (socketindex != -1) {
                 responseweb[socketindex].userid = data.userid;
             }
-            console.log('web sock');
             console.log(responseweb);
         });
         socket.on('leaveweb', (data) => {
@@ -53,13 +53,13 @@ exports.default = (io) => {
                     socketid: data.socketid
                 });
             }
+            console.log(responseapp);
         });
         socket.on('mapstateapp', (data) => {
             let indexuser = responseapp.findIndex((dat) => { return dat.userid == data.userid; });
             if (indexuser != -1) {
                 responseapp[indexuser].productid = data.productid;
             }
-            console.log('app sock');
             console.log(responseapp);
         });
         socket.on('leaveapp', (data) => {
@@ -67,6 +67,7 @@ exports.default = (io) => {
             if (indexuser != -1) {
                 responseapp[indexuser].productid = '';
             }
+            console.log(responseapp);
         });
         socket.on('shopping', (data) => {
             console.log(data);
@@ -110,6 +111,10 @@ exports.default = (io) => {
             if (socketindex2 != 1) {
                 responseweb.splice(socketindex2, 1);
             }
+            console.log('disconnect');
+            console.log(responseweb);
+            console.log('disconnect app');
+            console.log(responseapp);
         });
     });
     const notification_options = {
