@@ -690,8 +690,8 @@ router.post('/chats', (req, res) => {
 router.post('/getCustomerStore', (req, res) => {
     let id = req.body.userid;
     let tokenfirebase = req.body.tokenfirebase;
-    console.log(req.body);
     CustomerSchema_1.default.findOne({ _id: id }).select('auxStore').exec((err, doc) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+        console.log(doc);
         if (!empty(doc)) {
             if (doc.auxStore.stateaux) {
                 let peekstoreid = doc.auxStore.storeIndicator;
