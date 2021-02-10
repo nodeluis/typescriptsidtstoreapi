@@ -6,6 +6,7 @@ const http_status_codes_1 = require("http-status-codes");
 const StoreSchema_1 = tslib_1.__importDefault(require("../database/StoreSchema"));
 const ProductsSchema_1 = tslib_1.__importDefault(require("../database/ProductsSchema"));
 const CategorySchema_1 = tslib_1.__importDefault(require("../database/CategorySchema"));
+const CustomerSchema_1 = tslib_1.__importDefault(require("../database/CustomerSchema"));
 const sharp_1 = tslib_1.__importDefault(require("sharp"));
 const fs_1 = tslib_1.__importDefault(require("fs"));
 const sha1_1 = tslib_1.__importDefault(require("sha1"));
