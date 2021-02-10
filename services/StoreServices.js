@@ -786,7 +786,7 @@ router.post('/getCustomerStore', (req, res) => {
         }
     }));
 });
-router.post('/verifyStore', (req, res) => {
+router.post('/verifyStore',multer.single('credential'), (req, res) => {
     let id = req.body.userid;
     StoreSchema_1.default.findOne({ idcustomer: id }).select('verify storename nit city direction rubro hour phone verificationstore tokenFirebase').exec((err, doc) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
         if (!empty(doc)) {
@@ -797,26 +797,35 @@ router.post('/verifyStore', (req, res) => {
             doc.rubro = req.body.rubro;
             doc.hour = req.body.hour;
             doc.phone = req.body.phone;
-            doc.tokenFirebase.push(req.body.tokenfirebase);
-            let files = req.files;
-            let file = files.credential;
+            doc.tokenFirebase=[req.body.tokenfirebase];
+
             let date = new Date();
             let token = sha1_1.default(date.toString()).substr(0, 7);
-            let namecard = token + "_" + file.name;
-            yield file.mv(__dirname + '/../bannerfiles/storeidentificationcards/' + namecard, (err) => {
-                if (err) {
-                    console.log(err);
-                    return;
-                }
+
+            const blob=yield bucket.file(token+'_'+req.file.originalname);
+            const blobStream=yield blob.createWriteStream({
+                resumable:false
             });
-            let path = '/api/v1/store/identification/' + namecard + '/' + doc._id;
+
+            yield blobStream.on('error',(err)=>{
+                res.json({message:err});
+            });
+
+            yield blobStream.on('finish',async()=>{
+                console.log('se envio');
+                
+            });
+
+            yield blobStream.end(req.file.buffer);
+            let path = 'https://storage.googleapis.com/'+bucket.name+'/'+blob.name;
+
             try {
-                const [result] = yield client.textDetection(__dirname + '/../bannerfiles/storeidentificationcards/' + namecard);
+                const [result] = yield client.textDetection(path);
                 const detections = result.textAnnotations;
                 doc.verificationstore = {
                     avaible: true,
                     datacard: {
-                        directionpath: __dirname + '/../bannerfiles/storeidentificationcards/' + namecard,
+                        directionpath:path,
                         card: path,
                         textcard: detections[0].description
                     }
@@ -825,17 +834,17 @@ router.post('/verifyStore', (req, res) => {
                     res.status(200).json({
                         message: 'Se verificó la tienda',
                         storeid: doc._id,
-                        state: true
+                        state:true
                     });
                 });
-            }
-            catch (error) {
+            } catch (error) {
                 res.status(200).json({
-                    message: 'Error en la peticion',
+                    message: 'Debe de enviar una imagen correcta',
                     storeid: '',
-                    state: false
+                    state:false
                 });
             }
+            
         }
         else {
             res.status(200).json({
